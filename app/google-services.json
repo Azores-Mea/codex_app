@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "273276166035",
+    "project_id": "codex-f1355",
+    "storage_bucket": "codex-f1355.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:273276166035:android:bea18536f302a3c8975266",
+        "android_client_info": {
+          "package_name": "com.example.codex"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDWG8SRCtyv-37WJ-25ZUo43lAIJydHCHs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

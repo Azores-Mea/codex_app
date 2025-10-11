@@ -1,0 +1,490 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity"
+    android:background="@color/deep_blue"
+    >
+
+    <ImageView
+        android:id="@+id/codexstart"
+        android:layout_width="314dp"
+        android:layout_height="277dp"
+        android:importantForAccessibility="no"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.499"
+        app:srcCompat="@drawable/codexlogo" />
+
+    <LinearLayout
+        android:id="@+id/wcform"
+        android:layout_width="410dp"
+        android:layout_height="536dp"
+        android:background="@drawable/formround"
+        android:orientation="vertical"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginBottom="-40dp">
+
+        <TextView
+            android:id="@+id/wc"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/roboto_bold"
+            android:gravity="center"
+            android:paddingTop="17dp"
+            android:text="Welcome"
+            android:textSize="43sp"
+            android:textStyle="bold"
+            tools:ignore="HardcodedText" />
+
+        <TextView
+            android:id="@+id/textView11"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/roboto_medium"
+            android:gravity="center"
+            android:paddingTop="1dp"
+            android:text="Let’s get you started!"
+            android:textColor="#4398F2"
+            android:textSize="16sp"
+            tools:ignore="HardcodedText" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/createAccountBtn"
+            android:layout_width="318dp"
+            android:layout_height="61dp"
+            android:layout_gravity="center"
+            android:layout_marginHorizontal="20dp"
+            android:layout_marginTop="45dp"
+            android:drawableLeft="@drawable/avatar"
+            android:drawablePadding="8dp"
+            android:fontFamily="@font/roboto_bold"
+            android:paddingRight="50dp"
+            android:text="Create Account"
+            android:textAllCaps="false"
+            android:textColor="@android:color/white"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:translationZ="12dp"
+            app:backgroundTint="#082F63"
+            app:cornerRadius="12dp"
+            app:iconGravity="textStart"
+            tools:ignore="HardcodedText,RtlHardcoded,RtlSymmetry" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/signInBtn"
+            android:layout_width="318dp"
+            android:layout_height="61dp"
+            android:layout_gravity="center"
+            android:layout_marginHorizontal="20dp"
+            android:layout_marginTop="25dp"
+            android:drawableLeft="@drawable/email"
+            android:fontFamily="@font/roboto_bold"
+            android:paddingRight="60dp"
+            android:text="Sign In"
+            android:textAllCaps="false"
+            android:textColor="@android:color/white"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:translationZ="12dp"
+
+            app:backgroundTint="#082F63"
+            app:cornerRadius="12dp"
+            app:iconGravity="textStart"
+            tools:ignore="HardcodedText,RtlHardcoded,RtlSymmetry" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/guestBtn"
+            android:layout_width="318dp"
+            android:layout_height="61dp"
+            android:layout_gravity="center"
+            android:layout_marginHorizontal="20dp"
+            android:layout_marginTop="25dp"
+            android:drawableLeft="@drawable/guest"
+            android:fontFamily="@font/roboto_bold"
+            android:paddingRight="60dp"
+            android:text="Continue as Guest"
+            android:textAllCaps="false"
+            android:textColor="#4398F2"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:translationZ="12dp"
+
+            app:backgroundTint="@color/white"
+            app:cornerRadius="12dp"
+            app:iconGravity="textStart"
+            app:strokeColor="#4398F2"
+            app:strokeWidth="2dp"
+            tools:ignore="HardcodedText,RtlHardcoded,RtlSymmetry" />
+
+        <TextView
+            android:id="@+id/textView13"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text=""/>
+
+        <TextView
+            android:id="@+id/policyText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="54dp"
+            android:fontFamily="@font/roboto_bold"
+            android:gravity="center"
+            android:text="By continuing you agree to our Terms and Conditions and Privacy Policy"
+            android:textSize="12sp"
+            tools:ignore="HardcodedText" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/registration"
+        android:layout_width="411dp"
+        android:layout_height="807dp"
+        android:background="@drawable/formround"
+        android:visibility="gone"
+        android:orientation="vertical"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        android:focusableInTouchMode="true"
+        android:focusable="true"
+        android:clickable="true"
+        >
+
+
+        <ImageButton
+            android:id="@+id/close_registration"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_marginStart="20dp"
+            android:layout_marginTop="20dp"
+            android:background="#00FFFFFF"
+            android:scaleType="fitCenter"
+            app:srcCompat="@drawable/close"
+            tools:ignore="ContentDescription,SpeakableTextPresentCheck,TouchTargetSizeCheck" />
+
+        <TextView
+            android:id="@+id/registration_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="-16dp"
+            android:fontFamily="@font/roboto_bold"
+            android:gravity="center"
+            android:text="Create your Account"
+            android:textSize="25dp"
+            tools:ignore="HardcodedText,SpUsage,TextSizeCheck" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/firstNameLayout"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:layout_gravity="center"
+            android:layout_marginTop="25dp"
+            android:layout_width="330dp"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:hint="First Name"
+            app:boxStrokeColor="#594AE2"
+            app:boxStrokeWidthFocused="2dp"
+            app:endIconMode="clear_text"
+            app:endIconDrawable="@drawable/close"
+            tools:ignore="HardcodedText">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/firsNameInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textEmailAddress"
+                tools:ignore="TextContrastCheck" />
+        </com.google.android.material.textfield.TextInputLayout>
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/lastNameLayout"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:layout_gravity="center"
+            android:layout_marginTop="5dp"
+            android:layout_width="330dp"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:hint="Last Name"
+            app:boxStrokeColor="#594AE2"
+            app:boxStrokeWidthFocused="2dp"
+            app:endIconMode="clear_text"
+            app:endIconDrawable="@drawable/close"
+            tools:ignore="HardcodedText">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/lastNameInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textPersonName"
+                tools:ignore="TextContrastCheck" />
+        </com.google.android.material.textfield.TextInputLayout>
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/emailLayout"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:layout_gravity="center"
+            android:layout_marginTop="5dp"
+            android:layout_width="330dp"
+            android:layout_height="80dp"
+            android:layout_marginBottom="16dp"
+            android:hint="Email Address"
+            app:boxStrokeColor="#594AE2"
+            app:endIconDrawable="@drawable/close"
+            app:boxStrokeWidthFocused="2dp"
+            app:endIconMode="clear_text"
+            tools:ignore="HardcodedText">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/emailInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textPersonName"
+                tools:ignore="TextContrastCheck" />
+
+            <TextView
+                android:id="@+id/checkEmail_reg"
+                android:layout_width="300dp"
+                android:layout_gravity="center"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="" />
+        </com.google.android.material.textfield.TextInputLayout>
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/passwordLayout"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:layout_gravity="center"
+            android:layout_marginTop="-15dp"
+            android:layout_width="330dp"
+            android:layout_height="140dp"
+            android:layout_marginBottom="16dp"
+            android:hint="Password"
+            app:endIconMode="password_toggle"
+            app:boxStrokeColor="#594AE2"
+            app:boxStrokeWidthFocused="2dp"
+            app:endIconTint="@color/gray"
+            app:hintTextColor="#594AE2"
+            app:boxBackgroundMode="outline"
+            app:shapeAppearanceOverlay="@style/RoundedTextInput"
+            tools:ignore="HardcodedText">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/passwordInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textPassword"
+                android:paddingEnd="72dp"
+                tools:ignore="RtlSymmetry,TextContrastCheck"
+                />
+            <TextView
+                android:id="@+id/checkPass_reg"
+                android:layout_width="300dp"
+                android:layout_gravity="center"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="206dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/confirmBtn"
+            android:layout_width="218dp"
+            android:layout_height="61dp"
+            android:layout_gravity="center"
+            android:layout_marginBottom="30dp"
+            android:fontFamily="@font/roboto_bold"
+            android:text="Confirm"
+            android:textAllCaps="false"
+            android:textColor="@color/white"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:translationZ="12dp"
+            app:backgroundTint="#03162A"
+            app:cornerRadius="12dp"
+            tools:ignore="HardcodedText,RtlHardcoded,RtlSymmetry" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/login"
+        android:layout_width="411dp"
+        android:layout_height="807dp"
+        android:background="@drawable/formround"
+        android:visibility="visible"
+        android:orientation="vertical"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        android:focusableInTouchMode="true"
+        android:focusable="true"
+        android:clickable="true"
+        >
+
+
+        <ImageButton
+            android:id="@+id/close_login"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_marginStart="20dp"
+            android:layout_marginTop="20dp"
+            android:background="#00FFFFFF"
+            android:scaleType="fitCenter"
+            app:srcCompat="@drawable/close"
+            tools:ignore="ContentDescription,SpeakableTextPresentCheck,TouchTargetSizeCheck" />
+
+        <TextView
+            android:id="@+id/login_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:fontFamily="@font/roboto_bold"
+            android:gravity="center"
+            android:text="Welcome Back!"
+            android:textSize="35dp"
+            tools:ignore="HardcodedText,SpUsage,TextSizeCheck" />
+
+        <TextView
+            android:id="@+id/textView"
+            android:layout_width="230dp"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/roboto_bold"
+            android:gravity="center"
+            android:layout_gravity="center"
+            android:text="Let's pick up where you left off."
+            android:textColor="#09417D"
+            android:alpha=".9"
+            android:textSize="17sp"
+            android:layout_marginTop="30dp"/>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/login_email"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:layout_gravity="center"
+            android:layout_marginTop="60dp"
+            android:layout_width="330dp"
+            android:layout_height="100dp"
+            android:layout_marginBottom="16dp"
+            android:hint="Email Address"
+            app:boxStrokeColor="#594AE2"
+            app:boxStrokeWidthFocused="2dp"
+            app:endIconMode="clear_text"
+            app:endIconDrawable="@drawable/close"
+            tools:ignore="HardcodedText">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/login_email_in"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textPersonName"
+                tools:ignore="TextContrastCheck" />
+
+            <TextView
+                android:id="@+id/checkEmail_log"
+                android:layout_width="300dp"
+                android:layout_gravity="center"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/login_pass"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:layout_gravity="center"
+            android:layout_width="330dp"
+            android:layout_height="140dp"
+            android:hint="Password"
+            app:boxStrokeColor="#594AE2"
+            android:layout_marginTop="-10dp"
+            app:boxStrokeWidthFocused="2dp"
+            app:endIconMode="password_toggle"
+            app:endIconTint="@color/gray"
+            tools:ignore="HardcodedText">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/login_pass_in"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textPassword"
+                tools:ignore="TextContrastCheck" />
+
+            <TextView
+                android:id="@+id/checkPass_log"
+                android:layout_width="300dp"
+                android:layout_gravity="center"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="95dp" />
+
+        <LinearLayout
+            android:layout_width="310dp"
+            android:layout_gravity="center"
+            android:layout_height="189dp"
+            android:orientation="horizontal"
+            >
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/login_cancel"
+                android:layout_width="143dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:alpha=".7"
+                android:fontFamily="@font/roboto_medium"
+                android:text="Cancel"
+                android:textAllCaps="false"
+                android:textColor="#4398F2"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:translationZ="12dp"
+
+
+                app:backgroundTint="@color/white"
+                app:cornerRadius="12dp"
+                app:strokeColor="#4398F2"
+                app:strokeWidth="2dp"
+                tools:ignore="HardcodedText,RtlHardcoded,RtlSymmetry" />
+
+            <View
+                android:layout_width="20dp"
+                android:layout_height="230dp"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/login_confirm"
+                android:layout_width="143dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:fontFamily="@font/roboto_medium"
+                android:text="Confirm"
+                android:textAllCaps="false"
+                android:textColor="@color/black"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:enabled="false"
+                android:alpha="0.5"
+
+                android:translationZ="12dp"
+                app:backgroundTint="#E0E0E0"
+                app:cornerRadius="12dp"
+                tools:ignore="HardcodedText,RtlHardcoded,RtlSymmetry" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>
