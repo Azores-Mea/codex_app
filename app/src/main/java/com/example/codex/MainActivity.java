@@ -18,7 +18,6 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.google.android.material.button.MaterialButton;
 import com.google.firebase.database.DatabaseReference;
@@ -29,7 +28,6 @@ public class MainActivity extends AppCompatActivity {
     LinearLayout formContainer;
     ImageView imageView;
     MaterialButton createAccountBtn, signInBtn;
-
     DatabaseReference databaseReference;
 
     private RegistrationHandler registrationHandler;
@@ -47,7 +45,7 @@ public class MainActivity extends AppCompatActivity {
 
         databaseReference = FirebaseDatabase.getInstance().getReference("Users");
 
-        // Gradient title
+        // Gradient title text
         TextView title = findViewById(R.id.wc);
         Shader textShader = new LinearGradient(
                 0, 0, 0, title.getTextSize(),
@@ -57,17 +55,17 @@ public class MainActivity extends AppCompatActivity {
         );
         title.getPaint().setShader(textShader);
 
-        // Initialize handlers
+        // Initialize form handlers
         registrationHandler = new RegistrationHandler(this, databaseReference);
         loginHandler = new LoginHandler(this);
 
-        // ✅ Handle "Log In" button from registration confirmation
+        // Handle "Log In" redirect from registration success
         registrationHandler.setOnRegistrationCompleteListener(() -> {
             registrationHandler.hideRegistrationForm();
             loginHandler.showLoginForm();
         });
 
-        // Logo animation
+        // Logo and form animations
         Animation fadeIn = AnimationUtils.loadAnimation(this, R.anim.fadein);
         imageView.startAnimation(fadeIn);
         fadeIn.setAnimationListener(new Animation.AnimationListener() {
@@ -84,12 +82,14 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        // Open registration form
         createAccountBtn.setOnClickListener(v -> {
             hideKeyboardAndClearFocus();
             loginHandler.hideLoginForm();
             registrationHandler.showRegistrationForm();
         });
 
+        // Open login form
         signInBtn.setOnClickListener(v -> {
             hideKeyboardAndClearFocus();
             registrationHandler.hideRegistrationForm();
@@ -97,6 +97,7 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    // Hide keyboard when touching outside input fields
     @Override
     public boolean dispatchTouchEvent(MotionEvent event) {
         if (event.getAction() == MotionEvent.ACTION_DOWN) {
@@ -115,6 +116,7 @@ public class MainActivity extends AppCompatActivity {
         return super.dispatchTouchEvent(event);
     }
 
+    // Hide keyboard and clear input focus
     public void hideKeyboardAndClearFocus() {
         View view = getCurrentFocus();
         if (view != null) {

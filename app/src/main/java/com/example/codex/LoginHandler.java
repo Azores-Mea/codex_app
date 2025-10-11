@@ -38,10 +38,9 @@ public class LoginHandler {
     private Runnable emailValidationRunnable, passwordCheckRunnable;
 
     private final int COLOR_DEFAULT = Color.parseColor("#594AE2");
-    private final int COLOR_VALID = Color.parseColor("#00C853");
-    private final int COLOR_INVALID = Color.parseColor("#D50000");
+    private final int COLOR_VALID = Color.parseColor("#06651A");
+    private final int COLOR_INVALID = Color.parseColor("#F44336");
 
-    // ✅ Track current validity states
     private boolean isEmailValid = false;
     private boolean isPasswordMatched = false;
 
@@ -55,20 +54,18 @@ public class LoginHandler {
         closeLogin = activity.findViewById(R.id.close_login);
         loginBtn = activity.findViewById(R.id.login_confirm);
         loginCancel = activity.findViewById(R.id.login_cancel);
-
         checkEmail = activity.findViewById(R.id.checkEmail_log);
         checkPass = activity.findViewById(R.id.checkPass_log);
         emailLayout = activity.findViewById(R.id.login_email);
         passLayout = activity.findViewById(R.id.login_pass);
 
-
-        // ✅ Ensure password is initially hidden
+        // Hide password initially
         loginPassword.setTransformationMethod(new android.text.method.PasswordTransformationMethod());
         passLayout.setEndIconActivated(false);
 
         loginLayout.setVisibility(LinearLayout.GONE);
 
-        // ✅ Set initial disabled visual state
+        // Disable button initially
         loginBtn.setEnabled(false);
         loginBtn.setAlpha(0.5f);
         loginBtn.setBackgroundTintList(activity.getColorStateList(android.R.color.darker_gray));
@@ -78,14 +75,26 @@ public class LoginHandler {
     }
 
     private void setupListeners() {
-        // ✅ Debounced email validation
+        // Auto-lowercase email
+        loginEmail.addTextChangedListener(new SimpleTextWatcher(() -> {
+            String currentText = loginEmail.getText().toString();
+            String lowerText = currentText.toLowerCase();
+
+            if (!currentText.equals(lowerText)) {
+                loginEmail.setText(lowerText);
+                loginEmail.setSelection(lowerText.length());
+            }
+
+            validateEmail();
+        }));
+        // Debounced email validation
         loginEmail.addTextChangedListener(new SimpleTextWatcher(() -> {
             if (emailValidationRunnable != null) handler.removeCallbacks(emailValidationRunnable);
             emailValidationRunnable = this::validateEmail;
             handler.postDelayed(emailValidationRunnable, 100);
         }));
 
-        // ✅ Debounced password validation (check match in Firebase)
+        // Debounced password validation (check match in Firebase)
         loginPassword.addTextChangedListener(new SimpleTextWatcher(() -> {
             if (passwordCheckRunnable != null) handler.removeCallbacks(passwordCheckRunnable);
             passwordCheckRunnable = this::validatePasswordAgainstEmail;
@@ -100,6 +109,7 @@ public class LoginHandler {
     @SuppressLint("SetTextI18n")
     private void validateEmail() {
         String email = loginEmail.getText().toString().trim();
+
         if (email.isEmpty()) {
             checkEmail.setText("");
             emailLayout.setBoxStrokeColor(COLOR_DEFAULT);
@@ -109,7 +119,7 @@ public class LoginHandler {
         }
 
         if (!ValidationUtils.isValidEmail(email)) {
-            checkEmail.setText("Invalid Gmail address.");
+            checkEmail.setText("Invalid email. Please try again.");
             checkEmail.setTextColor(COLOR_INVALID);
             emailLayout.setBoxStrokeColor(COLOR_INVALID);
             isEmailValid = false;
@@ -126,7 +136,7 @@ public class LoginHandler {
                             emailLayout.setBoxStrokeColor(COLOR_VALID);
                             isEmailValid = true;
                         } else {
-                            checkEmail.setText("Email not found.");
+                            checkEmail.setText("Email not found. Please try again.");
                             checkEmail.setTextColor(COLOR_INVALID);
                             emailLayout.setBoxStrokeColor(COLOR_INVALID);
                             isEmailValid = false;
@@ -173,12 +183,11 @@ public class LoginHandler {
                             User user = userSnap.getValue(User.class);
                             if (user != null) {
                                 if (user.password.equals(password)) {
-                                    checkPass.setText("Password matched");
-                                    checkPass.setTextColor(COLOR_VALID);
+                                    checkPass.setText("");
                                     passLayout.setBoxStrokeColor(COLOR_VALID);
                                     isPasswordMatched = true;
                                 } else {
-                                    checkPass.setText("Incorrect password.");
+                                    checkPass.setText("Incorrect password. Please try again.");
                                     checkPass.setTextColor(COLOR_INVALID);
                                     passLayout.setBoxStrokeColor(COLOR_INVALID);
                                     isPasswordMatched = false;
@@ -196,7 +205,7 @@ public class LoginHandler {
                 });
     }
 
-    // ✅ Update Login button color & state dynamically
+    // Update login button color & state dynamically
     private void updateLoginButtonState() {
         boolean enable = isEmailValid && isPasswordMatched;
         loginBtn.setEnabled(enable);
@@ -217,7 +226,7 @@ public class LoginHandler {
 
         String email = loginEmail.getText().toString().trim();
 
-        // ✅ Fetch user type and name before showing success dialog
+        // Fetch user info before success dialog
         databaseReference.orderByChild("email").equalTo(email)
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
@@ -243,7 +252,7 @@ public class LoginHandler {
                 });
     }
 
-    // ✅ Centered single-button popup after login success
+    // Popup after login success
     @SuppressLint("InflateParams")
     private void showLoginSuccessDialog(String userType, String firstName) {
         LayoutInflater inflater = activity.getLayoutInflater();
@@ -256,11 +265,9 @@ public class LoginHandler {
 
         btnNo.setVisibility(View.GONE);
         View spaceView = dialogView.findViewById(R.id.space);
-        if (spaceView != null) {
-            spaceView.setVisibility(View.GONE);
-        }
+        if (spaceView != null) spaceView.setVisibility(View.GONE);
 
-        // ✅ Custom message based on user type
+        // Custom message based on user type
         if ("Admin".equalsIgnoreCase(userType)) {
             title.setText("Welcome, Admin!");
             message.setText("Welcome back, moderator!");
@@ -294,20 +301,14 @@ public class LoginHandler {
             hideLoginForm();
 
             View spaceViewMain = activity.findViewById(R.id.space);
-            if (spaceViewMain != null) {
-                spaceViewMain.setVisibility(View.GONE);
-            }
+            if (spaceViewMain != null) spaceViewMain.setVisibility(View.GONE);
 
             if ("Admin".equalsIgnoreCase(userType)) {
                 Toast.makeText(activity, "Redirecting to Admin Dashboard...", Toast.LENGTH_SHORT).show();
-                /*Intent intent = new Intent(activity, AdminDashboardActivity.class);
-                activity.startActivity(intent);
-                activity.overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);*/
+                // Admin dashboard
             } else {
                 Toast.makeText(activity, "Welcome back, learner!", Toast.LENGTH_SHORT).show();
-                /*Intent intent = new Intent(activity, LearnerDashboardActivity.class);
-                activity.startActivity(intent);
-                activity.overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);*/
+                // Homepage
             }
         });
     }
@@ -319,7 +320,6 @@ public class LoginHandler {
         loginLayout.setClickable(true);
         loginLayout.setFocusable(true);
         loginLayout.setFocusableInTouchMode(true);
-
         loginLayout.setVisibility(LinearLayout.VISIBLE);
         loginLayout.bringToFront();
         loginLayout.startAnimation(AnimationUtils.loadAnimation(activity, R.anim.formslideup));
@@ -363,7 +363,7 @@ public class LoginHandler {
         isEmailValid = false;
         isPasswordMatched = false;
 
-        // ✅ Reset password visibility to hidden each time the form resets
+        // Reset password visibility
         loginPassword.setTransformationMethod(new android.text.method.PasswordTransformationMethod());
         passLayout.setEndIconActivated(false);
     }

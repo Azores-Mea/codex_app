@@ -17,7 +17,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
@@ -47,10 +46,10 @@ public class RegistrationHandler {
     private boolean isPasswordValid = false;
 
     private final int COLOR_DEFAULT = Color.parseColor("#594AE2");
-    private final int COLOR_VALID = Color.parseColor("#00C853");
-    private final int COLOR_INVALID = Color.parseColor("#D50000");
+    private final int COLOR_VALID = Color.parseColor("#06651A");
+    private final int COLOR_INVALID = Color.parseColor("#F44336");
 
-    // ✅ Callback listener
+    // Callback interface
     public interface OnRegistrationCompleteListener {
         void onLoginRequested();
     }
@@ -89,7 +88,7 @@ public class RegistrationHandler {
         confirmBtn.setEnabled(false);
         confirmBtn.setAlpha(0.5f);
 
-        // ✅ Ensure password starts hidden with toggle off
+        // Hide password initially
         regPassword.setInputType(
                 android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
         );
@@ -107,28 +106,27 @@ public class RegistrationHandler {
             }));
         }
 
-        // ✅ Email field listener with auto lowercase conversion
+        // Auto-lowercase email
         regEmail.addTextChangedListener(new SimpleTextWatcher(() -> {
             String currentText = regEmail.getText().toString();
             String lowerText = currentText.toLowerCase();
 
-            // Avoid recursive update
             if (!currentText.equals(lowerText)) {
                 regEmail.setText(lowerText);
-                regEmail.setSelection(lowerText.length()); // keep cursor at end
+                regEmail.setSelection(lowerText.length());
             }
 
             validateEmail();
         }));
 
-        // ✅ Password validation
+        // Password validation
         regPassword.addTextChangedListener(new SimpleTextWatcher(this::validatePassword));
 
         closeRegistration.setOnClickListener(v -> hideRegistrationForm());
         confirmBtn.setOnClickListener(v -> showConfirmationDialog());
     }
 
-    // ---------------- EMAIL VALIDATION ----------------
+    // --- Email validation ---
     private void validateEmail() {
         String email = regEmail.getText().toString().trim();
 
@@ -184,7 +182,7 @@ public class RegistrationHandler {
         emailLayout.setBoxStrokeColor(COLOR_INVALID);
     }
 
-    // ---------------- PASSWORD VALIDATION ----------------
+    // --- Password validation ---
     private void validatePassword() {
         String password = regPassword.getText().toString();
 
@@ -197,12 +195,12 @@ public class RegistrationHandler {
         }
 
         if (!ValidationUtils.isStrongPassword(password)) {
-            checkPass.setText("Use 8–20 chars w/ upper, lower, number, and symbol.");
+            checkPass.setText("Use 8-20 characters with upper and lowercase letters, numbers, and special symbols. No spaces or common passwords allowed.");
             checkPass.setTextColor(COLOR_INVALID);
             passLayout.setBoxStrokeColor(COLOR_INVALID);
             isPasswordValid = false;
         } else {
-            checkPass.setText("Strong Password");
+            checkPass.setText("Strong password.");
             checkPass.setTextColor(COLOR_VALID);
             passLayout.setBoxStrokeColor(COLOR_VALID);
             isPasswordValid = true;
@@ -211,7 +209,7 @@ public class RegistrationHandler {
         validateAllConditions();
     }
 
-    // ---------------- BUTTON VISIBILITY ----------------
+    // --- Button state ---
     private void checkAnyFieldFilled() {
         boolean anyFilled = fields.stream().anyMatch(f -> !f.getText().toString().trim().isEmpty());
         if (anyFilled && confirmBtn.getVisibility() == MaterialButton.GONE) {
@@ -230,7 +228,7 @@ public class RegistrationHandler {
         confirmBtn.setTextColor(canEnable ? Color.WHITE : Color.LTGRAY);
     }
 
-    // ---------------- CONFIRMATION POPUP ----------------
+    // --- Confirmation dialog ---
     private void showConfirmationDialog() {
         LayoutInflater inflater = activity.getLayoutInflater();
         View dialogView = inflater.inflate(R.layout.dialog_ready_to_join, null);
@@ -249,7 +247,7 @@ public class RegistrationHandler {
         dialog.getWindow().setDimAmount(0.6f);
 
         TextView dialogMessage = dialogView.findViewById(R.id.dialog_message);
-        String htmlText = "<b><font color='#09417D'>Double-check</font></b> your details before signing up. Do you want to <b><font color='#09417D'>continue</font></b> with registration?";
+        String htmlText = "<b><font color='#09417D'>Double-check</font></b> your details before signing up. Do you want to <b><font color='#09417D'>continue</font></b>?";
         dialogMessage.setText(Html.fromHtml(htmlText, Html.FROM_HTML_MODE_LEGACY));
 
         TextView title = dialogView.findViewById(R.id.dialog_title);
@@ -266,7 +264,7 @@ public class RegistrationHandler {
         });
     }
 
-    // ---------------- FINAL CONFIRMATION POPUP ----------------
+    // --- Success dialog ---
     @SuppressLint("InflateParams")
     private void showFinalConfirmationDialog() {
         LayoutInflater inflater = activity.getLayoutInflater();
@@ -290,7 +288,7 @@ public class RegistrationHandler {
         GradientTextUtil.applyGradient(title, "#03162A", "#0A4B90");
 
         TextView message = dialogView.findViewById(R.id.dialog_message);
-        String htmlText = "Your registration was <b><font color='#09417D'>successful!</font></b> You can now log in and start exploring <b><font color='#09417D'>CodeX: Java</font></b>";
+        String htmlText = "Your registration was <b><font color='#09417D'>successful!</font></b> You can now log in and explore <b><font color='#09417D'>CodeX: Java</font></b>";
         message.setText(Html.fromHtml(htmlText, Html.FROM_HTML_MODE_LEGACY));
 
         MaterialButton btnNo = dialogView.findViewById(R.id.no_btn);
@@ -305,14 +303,11 @@ public class RegistrationHandler {
         });
         btnYes.setOnClickListener(v -> {
             dialog.dismiss();
-            if (listener != null) {
-                listener.onLoginRequested();
-            }
+            if (listener != null) listener.onLoginRequested();
         });
     }
 
-    // ---------------- SAVE USER ----------------
-
+    // --- Save user to Firebase ---
     private void saveToFirebase() {
         String firstName = regName.getText().toString().trim();
         String lastName = regLName.getText().toString().trim();
@@ -324,14 +319,11 @@ public class RegistrationHandler {
         if (firstName.isEmpty() || lastName.isEmpty() || email.isEmpty() || password.isEmpty()) return;
         if (!isEmailValid || !isPasswordValid) return;
 
-        // ✅ Query last user by key
         usersRef.orderByKey().limitToLast(1)
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        long newUserId = 1; // default for first user
-
-                        // ✅ Get the last user key and increment
+                        long newUserId = 1;
                         for (DataSnapshot child : snapshot.getChildren()) {
                             try {
                                 long lastId = Long.parseLong(Objects.requireNonNull(child.getKey()));
@@ -341,11 +333,9 @@ public class RegistrationHandler {
                             }
                         }
 
-                        // ✅ Create user object
                         User user = new User(firstName, lastName, email, password, usertype, classification);
                         user.userId = newUserId;
 
-                        // ✅ Save with incremented ID
                         usersRef.child(String.valueOf(newUserId)).setValue(user)
                                 .addOnSuccessListener(aVoid -> {
                                     clearFields();
@@ -362,8 +352,7 @@ public class RegistrationHandler {
                 });
     }
 
-
-    // ---------------- ANIMATIONS ----------------
+    // --- Show / Hide form ---
     public void showRegistrationForm() {
         if (isVisible) return;
         isVisible = true;
@@ -396,6 +385,7 @@ public class RegistrationHandler {
         });
     }
 
+    // --- Reset form ---
     private void clearFields() {
         for (EditText f : fields) {
             f.setText("");
@@ -410,7 +400,6 @@ public class RegistrationHandler {
         confirmBtn.setEnabled(false);
         confirmBtn.setAlpha(0.5f);
 
-        // ✅ Reset password to hidden when reopening
         regPassword.setTransformationMethod(PasswordTransformationMethod.getInstance());
         passLayout.setEndIconActivated(false);
     }
