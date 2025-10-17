@@ -305,12 +305,18 @@ public class LoginHandler {
 
             if ("Admin".equalsIgnoreCase(userType)) {
                 Toast.makeText(activity, "Redirecting to Admin Dashboard...", Toast.LENGTH_SHORT).show();
-                // Admin dashboard
-            } else {
+                // TODO: Launch AdminActivity if you have one
+                // Intent intent = new Intent(activity, AdminActivity.class);
+                // activity.startActivity(intent);
+            } else if ("Learner".equalsIgnoreCase(userType)) {
                 Toast.makeText(activity, "Welcome back, learner!", Toast.LENGTH_SHORT).show();
-                // Homepage
+                Intent intent = new Intent(activity, Navigation_ActivityLearner.class);
+                activity.startActivity(intent);
+                activity.overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+                activity.finish();
             }
         });
+
     }
 
     public void showLoginForm() {
