@@ -3,7 +3,10 @@ package com.example.codex;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.res.ColorStateList;
 import android.graphics.Color;
+import android.graphics.LinearGradient;
+import android.graphics.Shader;
 import android.text.Html;
 import android.text.method.PasswordTransformationMethod;
 import android.view.LayoutInflater;
@@ -96,6 +99,9 @@ public class RegistrationHandler {
         passLayout.setEndIconActivated(false);
 
         setupListeners();
+        TextView title = activity.findViewById(R.id.registration_title);
+        GradientTextUtil.applyGradient(title, "#03162A", "#0A4B90");
+
     }
 
     private void setupListeners() {
@@ -167,18 +173,21 @@ public class RegistrationHandler {
     private void resetEmailValidation() {
         checkEmail.setText("");
         emailLayout.setBoxStrokeColor(COLOR_DEFAULT);
+        emailLayout.setHintTextColor(ColorStateList.valueOf(COLOR_DEFAULT));
         isEmailValid = false;
     }
 
     private void setValidEmail(String msg) {
         checkEmail.setText(msg);
         checkEmail.setTextColor(COLOR_VALID);
+        emailLayout.setHintTextColor(ColorStateList.valueOf(COLOR_VALID));
         emailLayout.setBoxStrokeColor(COLOR_VALID);
     }
 
     private void setInvalidEmail(String msg) {
         checkEmail.setText(msg);
         checkEmail.setTextColor(COLOR_INVALID);
+        emailLayout.setHintTextColor(ColorStateList.valueOf(COLOR_INVALID));
         emailLayout.setBoxStrokeColor(COLOR_INVALID);
     }
 
@@ -189,6 +198,7 @@ public class RegistrationHandler {
         if (password.isEmpty()) {
             checkPass.setText("");
             passLayout.setBoxStrokeColor(COLOR_DEFAULT);
+            passLayout.setHintTextColor(ColorStateList.valueOf(COLOR_DEFAULT));
             isPasswordValid = false;
             validateAllConditions();
             return;
@@ -197,11 +207,13 @@ public class RegistrationHandler {
         if (!ValidationUtils.isStrongPassword(password)) {
             checkPass.setText("Use 8-20 characters with upper and lowercase letters, numbers, and special symbols. No spaces or common passwords allowed.");
             checkPass.setTextColor(COLOR_INVALID);
+            passLayout.setHintTextColor(ColorStateList.valueOf(COLOR_INVALID));
             passLayout.setBoxStrokeColor(COLOR_INVALID);
             isPasswordValid = false;
         } else {
             checkPass.setText("Strong password.");
             checkPass.setTextColor(COLOR_VALID);
+            passLayout.setHintTextColor(ColorStateList.valueOf(COLOR_VALID));
             passLayout.setBoxStrokeColor(COLOR_VALID);
             isPasswordValid = true;
         }

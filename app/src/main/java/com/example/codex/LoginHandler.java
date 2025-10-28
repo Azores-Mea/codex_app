@@ -4,7 +4,11 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Intent;
+import android.content.res.ColorStateList;
 import android.graphics.Color;
+import android.graphics.LinearGradient;
+import android.graphics.Shader;
+import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.animation.Animation;
@@ -72,6 +76,10 @@ public class LoginHandler {
         loginBtn.setTextColor(Color.WHITE);
 
         setupListeners();
+        TextView title = activity.findViewById(R.id.login_title);
+        GradientTextUtil.applyGradient(title, "#03162A", "#0A4B90");
+
+
     }
 
     private void setupListeners() {
@@ -113,6 +121,7 @@ public class LoginHandler {
         if (email.isEmpty()) {
             checkEmail.setText("");
             emailLayout.setBoxStrokeColor(COLOR_DEFAULT);
+            emailLayout.setHintTextColor(ColorStateList.valueOf(COLOR_DEFAULT));
             isEmailValid = false;
             updateLoginButtonState();
             return;
@@ -121,6 +130,7 @@ public class LoginHandler {
         if (!ValidationUtils.isValidEmail(email)) {
             checkEmail.setText("Invalid email. Please try again.");
             checkEmail.setTextColor(COLOR_INVALID);
+            emailLayout.setHintTextColor(ColorStateList.valueOf(COLOR_INVALID));
             emailLayout.setBoxStrokeColor(COLOR_INVALID);
             isEmailValid = false;
             updateLoginButtonState();
@@ -134,10 +144,12 @@ public class LoginHandler {
                         if (snapshot.exists()) {
                             checkEmail.setText("");
                             emailLayout.setBoxStrokeColor(COLOR_VALID);
+                            emailLayout.setHintTextColor(ColorStateList.valueOf(COLOR_VALID));
                             isEmailValid = true;
                         } else {
                             checkEmail.setText("Email not found. Please try again.");
                             checkEmail.setTextColor(COLOR_INVALID);
+                            emailLayout.setHintTextColor(ColorStateList.valueOf(COLOR_INVALID));
                             emailLayout.setBoxStrokeColor(COLOR_INVALID);
                             isEmailValid = false;
                         }
@@ -147,6 +159,7 @@ public class LoginHandler {
                     @Override
                     public void onCancelled(@NonNull DatabaseError error) {
                         checkEmail.setText("Database error.");
+                        emailLayout.setHintTextColor(ColorStateList.valueOf(COLOR_INVALID));
                         checkEmail.setTextColor(COLOR_INVALID);
                         isEmailValid = false;
                         updateLoginButtonState();
@@ -161,6 +174,7 @@ public class LoginHandler {
 
         if (email.isEmpty() || password.isEmpty()) {
             checkPass.setText("");
+            passLayout.setHintTextColor(ColorStateList.valueOf(COLOR_DEFAULT));
             passLayout.setBoxStrokeColor(COLOR_DEFAULT);
             isPasswordMatched = false;
             updateLoginButtonState();
@@ -184,11 +198,13 @@ public class LoginHandler {
                             if (user != null) {
                                 if (user.password.equals(password)) {
                                     checkPass.setText("");
+                                    passLayout.setHintTextColor(ColorStateList.valueOf(COLOR_VALID));
                                     passLayout.setBoxStrokeColor(COLOR_VALID);
                                     isPasswordMatched = true;
                                 } else {
                                     checkPass.setText("Incorrect password. Please try again.");
                                     checkPass.setTextColor(COLOR_INVALID);
+                                    passLayout.setHintTextColor(ColorStateList.valueOf(COLOR_INVALID));
                                     passLayout.setBoxStrokeColor(COLOR_INVALID);
                                     isPasswordMatched = false;
                                 }
@@ -205,7 +221,6 @@ public class LoginHandler {
                 });
     }
 
-    // Update login button color & state dynamically
     private void updateLoginButtonState() {
         boolean enable = isEmailValid && isPasswordMatched;
         loginBtn.setEnabled(enable);
@@ -237,6 +252,14 @@ public class LoginHandler {
                                 if (user != null) {
                                     String userType = user.usertype != null ? user.usertype : "Learner";
                                     String firstName = user.firstName != null ? user.firstName : "User";
+                                    String lastName = user.lastName != null ? user.lastName : "";
+                                    String classification = user.classification != null ? user.classification : "Beginner";
+                                    int userId = Math.toIntExact(user.userId);
+
+                                    // ✅ Save session info
+                                    SessionManager sessionManager = new SessionManager(activity);
+                                    sessionManager.saveUserSession(email, firstName, lastName, classification, userType, userId);
+
                                     showLoginSuccessDialog(userType, firstName);
                                 }
                             }
@@ -252,37 +275,12 @@ public class LoginHandler {
                 });
     }
 
-    // Popup after login success
     @SuppressLint("InflateParams")
     private void showLoginSuccessDialog(String userType, String firstName) {
         LayoutInflater inflater = activity.getLayoutInflater();
-        View dialogView = inflater.inflate(R.layout.dialog_ready_to_join, null);
+        View dialogView = inflater.inflate(R.layout.login_confirm_msg, null);
 
-        TextView title = dialogView.findViewById(R.id.dialog_title);
-        TextView message = dialogView.findViewById(R.id.dialog_message);
         MaterialButton btnYes = dialogView.findViewById(R.id.yes_btn);
-        MaterialButton btnNo = dialogView.findViewById(R.id.no_btn);
-
-        btnNo.setVisibility(View.GONE);
-        View spaceView = dialogView.findViewById(R.id.space);
-        if (spaceView != null) spaceView.setVisibility(View.GONE);
-
-        // Custom message based on user type
-        if ("Admin".equalsIgnoreCase(userType)) {
-            title.setText("Welcome, Admin!");
-            message.setText("Welcome back, moderator!");
-            message.setTextSize(18);
-            btnYes.setText("Confirm");
-        } else {
-            title.setText("Login Successful!");
-            message.setText("Welcome back, coder!");
-            message.setTextSize(18);
-            btnYes.setText("Confirm");
-        }
-
-        LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) btnYes.getLayoutParams();
-        params.gravity = android.view.Gravity.CENTER_HORIZONTAL;
-        btnYes.setLayoutParams(params);
 
         AlertDialog.Builder builder = new AlertDialog.Builder(activity);
         builder.setView(dialogView);
@@ -296,27 +294,25 @@ public class LoginHandler {
         );
         dialog.getWindow().setDimAmount(0.6f);
 
+        TextView title = dialogView.findViewById(R.id.dialog_title);
+        GradientTextUtil.applyGradient(title, "#03162A", "#0A4B90");
+
         btnYes.setOnClickListener(v -> {
             dialog.dismiss();
-            hideLoginForm();
 
             View spaceViewMain = activity.findViewById(R.id.space);
             if (spaceViewMain != null) spaceViewMain.setVisibility(View.GONE);
 
             if ("Admin".equalsIgnoreCase(userType)) {
                 Toast.makeText(activity, "Redirecting to Admin Dashboard...", Toast.LENGTH_SHORT).show();
-                // TODO: Launch AdminActivity if you have one
-                // Intent intent = new Intent(activity, AdminActivity.class);
-                // activity.startActivity(intent);
+                // TODO: Launch AdminActivity if needed
             } else if ("Learner".equalsIgnoreCase(userType)) {
-                Toast.makeText(activity, "Welcome back, learner!", Toast.LENGTH_SHORT).show();
                 Intent intent = new Intent(activity, Navigation_ActivityLearner.class);
                 activity.startActivity(intent);
                 activity.overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
                 activity.finish();
             }
         });
-
     }
 
     public void showLoginForm() {

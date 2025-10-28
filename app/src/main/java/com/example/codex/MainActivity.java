@@ -37,6 +37,12 @@ public class MainActivity extends AppCompatActivity {
     private RegistrationHandler registrationHandler;
     private LoginHandler loginHandler;
 
+/*
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.fragment_learn);
+    }*/
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -48,15 +54,9 @@ public class MainActivity extends AppCompatActivity {
 
         databaseReference = FirebaseDatabase.getInstance().getReference("Users");
 
-        // Gradient title text
         TextView title = findViewById(R.id.wc);
-        Shader textShader = new LinearGradient(
-                0, 0, 0, title.getTextSize(),
-                new int[]{Color.parseColor("#000405"), Color.parseColor("#00566B")},
-                null,
-                Shader.TileMode.CLAMP
-        );
-        title.getPaint().setShader(textShader);
+        GradientTextUtil.applyGradient(title, "#03162A", "#0A4B90");
+
 
         // Initialize form handlers
         registrationHandler = new RegistrationHandler(this, databaseReference);

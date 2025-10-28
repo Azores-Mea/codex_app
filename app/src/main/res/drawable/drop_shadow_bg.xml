@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Shadow layer -->
+    <item
+        android:right="0dp"
+        android:left="0dp"
+        android:top="4dp"> <!-- Y offset -->
+        <shape android:shape="rectangle">
+            <solid android:color="#40000000"/> <!-- 25% opacity black -->
+            <corners android:radius="0dp"/>
+            <padding android:bottom="4dp"/>
+            <size android:height="4dp"/>
+        </shape>
+    </item>
+
+    <!-- Main content layer -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#03162A"/> <!-- Your bar color -->
+        </shape>
+    </item>
+</layer-list>

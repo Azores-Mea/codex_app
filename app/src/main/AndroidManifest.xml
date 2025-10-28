@@ -12,7 +12,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Codex">
         <activity
-            android:name=".MainActivity"
+            android:name=".QuizActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -21,6 +21,13 @@
             </intent-filter>
         </activity>
         <activity android:name=".Navigation_ActivityLearner" />
+        <activity
+            android:name=".AddQuestionActivity"
+            android:exported="false" />
+        <activity android:name=".MainActivity"
+            android:exported="true">
+
+        </activity>
         <meta-data
             android:name="preloaded_fonts"
             android:resource="@array/preloaded_fonts" />

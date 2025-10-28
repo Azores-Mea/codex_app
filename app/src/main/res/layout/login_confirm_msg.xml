@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical"
+    android:padding="10dp"
+
+    android:layout_gravity="center"
+    android:background="@drawable/dialogue_background"
+    android:layout_width="370dp"
+    android:layout_height="380dp">
+
+    <TextView
+        android:id="@+id/dialog_title"
+        android:text="Login Successful!"
+        android:textSize="60sp"
+        android:textStyle="bold"
+        android:layout_marginTop="30dp"
+        android:textColor="#002366"
+        android:gravity="center"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <TextView
+        android:id="@+id/dialog_message"
+        android:layout_width="184dp"
+        android:layout_height="103dp"
+        android:layout_gravity="center"
+        android:layout_marginTop="8dp"
+        android:fontFamily="@font/roboto_medium"
+        android:gravity="center"
+        android:text="Welcome back, coder!"
+        android:textColor="#09417D"
+        android:textSize="24sp" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/yes_btn"
+        android:layout_width="154dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:fontFamily="@font/roboto_medium"
+        android:text="Confirm"
+        android:textAllCaps="false"
+        android:textColor="@color/white"
+        android:textSize="14sp"
+        android:textStyle="bold"
+
+        android:translationZ="12dp"
+        app:backgroundTint="@color/black"
+        app:cornerRadius="10dp"
+        tools:ignore="HardcodedText,RtlHardcoded,RtlSymmetry" />
+
+</LinearLayout>

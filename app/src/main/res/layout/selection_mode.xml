@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="420dp"
+        android:layout_height="894dp"
+        android:orientation="vertical"
+        tools:ignore="MissingConstraints"
+        tools:layout_editor_absoluteX="-5dp"
+        tools:layout_editor_absoluteY="-2dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="90dp"
+            android:orientation="horizontal"
+            android:background="@drawable/drop_shadow_bg">
+
+            <ImageView
+                android:id="@+id/back"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:layout_weight="1"
+                app:srcCompat="@drawable/back_arrow_icon" />
+
+            <TextView
+                android:layout_width="304dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:layout_weight="1"
+                android:fontFamily="@font/roboto_bold"
+                android:text="Select Learning Mode"
+                android:textColor="@color/white"
+                android:textSize="24sp" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/textView3"
+            android:layout_width="336dp"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/roboto_medium"
+            android:gravity="center"
+            android:text="Select the learning mode that best fits your learning style."
+            android:textColor="#09417D"
+            android:textSize="24sp"
+            android:layout_marginTop="30dp"
+            android:layout_gravity="center"/>
+
+
+        <LinearLayout
+            android:layout_marginTop="30dp"
+            android:layout_gravity="center"
+            android:layout_width="372dp"
+            android:layout_height="297dp"
+            android:background="@drawable/mode_card"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="64dp"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:layout_width="2dp"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginLeft="15dp"
+                    android:layout_weight="1"
+                    app:srcCompat="@drawable/guided_icon_frame" />
+
+                <TextView
+                    android:layout_width="229dp"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:layout_weight="1"
+                    android:fontFamily="@font/roboto_bold"
+                    android:text="Guided Mode (Sequential)"
+                    android:textColor="@color/white"
+                    android:textSize="18sp" />
+
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="317dp"
+                android:layout_height="144dp"
+                android:layout_gravity="center"
+                android:fontFamily="@font/roboto"
+                android:gravity="center_vertical"
+                android:text="Follow a structured learning path with lessons that unlock one at a time. Each topic builds on the previous one to ensure a solid understanding of every Java concept."
+                android:textSize="18sp" />
+
+            <View
+
+                android:layout_width="match_parent"
+                android:layout_height="9dp" />
+
+            <TextView
+
+                android:layout_width="315dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:fontFamily="@font/roboto_bold"
+                android:text="Level:"
+                android:textColor="#03162A"
+                android:textSize="16sp" />
+
+            <LinearLayout
+
+                android:layout_width="157dp"
+                android:layout_height="32dp"
+                android:layout_marginLeft="25dp"
+                android:layout_marginTop="5dp"
+                android:orientation="horizontal">
+
+                <ImageView
+
+                    android:layout_width="56dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    app:srcCompat="@drawable/intermediate_classifier" />
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    app:srcCompat="@drawable/advanced_classifier" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_marginTop="30dp"
+            android:layout_gravity="center"
+            android:layout_width="372dp"
+            android:layout_height="297dp"
+            android:background="@drawable/mode_card"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="64dp"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:layout_width="2dp"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginLeft="15dp"
+                    android:layout_weight="1"
+                    app:srcCompat="@drawable/module_icon_frame" />
+
+                <TextView
+                    android:layout_width="229dp"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:layout_weight="1"
+                    android:fontFamily="@font/roboto_bold"
+                    android:text="Module Mode (Unlocked)"
+                    android:textColor="@color/white"
+                    android:textSize="18sp" />
+
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="317dp"
+                android:layout_height="144dp"
+                android:layout_gravity="center"
+                android:fontFamily="@font/roboto"
+                android:gravity="center_vertical"
+                android:text="Learn at your own pace with full access to all lessons and activities. Perfect for experienced learners who prefer flexibility in reviewing or exploring topics freely."
+                android:textSize="18sp" />
+
+            <View
+
+                android:layout_width="match_parent"
+                android:layout_height="9dp" />
+
+            <TextView
+
+                android:layout_width="315dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:fontFamily="@font/roboto_bold"
+                android:text="Level:"
+                android:textColor="#03162A"
+                android:textSize="16sp" />
+
+            <LinearLayout
+
+                android:layout_width="157dp"
+                android:layout_height="32dp"
+                android:layout_marginLeft="25dp"
+                android:layout_marginTop="5dp"
+                android:orientation="horizontal">
+
+                <ImageView
+
+                    android:layout_width="56dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    app:srcCompat="@drawable/intermediate_classifier" />
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    app:srcCompat="@drawable/advanced_classifier" />
+            </LinearLayout>
+        </LinearLayout>
+
+
+    </LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>
