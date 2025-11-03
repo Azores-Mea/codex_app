@@ -58,7 +58,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
                 android:layout_marginEnd="8dp"
-                android:background="@drawable/beginner_classifier"
+                android:background="@drawable/none_classifier"
                 android:textColor="#4398F2"
                 android:textSize="10sp"
                 app:layout_constraintEnd_toStartOf="@id/imageViewAvatar"

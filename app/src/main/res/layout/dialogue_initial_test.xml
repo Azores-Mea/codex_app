@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical"
+    android:padding="10dp"
+
+    android:layout_gravity="center"
+    android:background="@drawable/dialogue_background"
+    android:layout_width="370dp"
+    android:layout_height="420dp">
+
+    <TextView
+        android:layout_gravity="center"
+        android:id="@+id/dialog_title"
+        android:layout_width="285dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="30dp"
+        android:gravity="center"
+        android:text="Java Proficiency Test complete!"
+        android:textColor="#002366"
+        android:textSize="32sp"
+        android:textStyle="bold" />
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/classification"
+        android:layout_width="165dp"
+        android:layout_height="86dp"
+        android:layout_gravity="center"
+        android:layout_marginTop="30dp"
+        app:cardCornerRadius="10dp"
+        app:strokeColor="@color/tertiary">
+
+        <LinearLayout
+            android:id="@+id/classBg"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/bgText"
+            android:orientation="vertical">
+
+
+            <TextView
+                android:id="@+id/className"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:fontFamily="@font/roboto_bold"
+                android:gravity="center"
+                android:text="Beginner"
+                android:textColor="@color/tertiary"
+                android:textSize="24sp" />
+
+            <TextView
+                android:id="@+id/percent"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/roboto_bold"
+                android:gravity="center"
+                android:text="0%"
+                android:textColor="@color/tertiary"
+                android:textSize="24sp" />
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+
+    <TextView
+        android:id="@+id/score"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Score: 0/20"
+        android:textColor="#0E0E2C"
+        android:textSize="18sp"
+        android:fontFamily="@font/roboto_medium"
+        android:gravity="center"
+        android:layout_marginTop="10dp"/>
+
+    <TextView
+        android:layout_gravity="center"
+        android:id="@+id/classText"
+        android:layout_width="250dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:fontFamily="@font/roboto_medium"
+        android:gravity="center"
+        android:text="Every expert starts somewhere — keep learning!"
+        android:textColor="#0E0E2C"
+        android:textSize="18sp" />
+
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_weight="1"
+        android:layout_marginTop="10dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/yes_btn"
+            android:layout_width="235dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:fontFamily="@font/roboto_medium"
+            android:text="Continue to homepage"
+            android:textAllCaps="false"
+            android:textColor="@color/white"
+            android:textSize="14sp"
+            android:textStyle="bold"
+
+            android:translationZ="5dp"
+            app:backgroundTint="@color/black"
+            app:cornerRadius="7dp"
+            tools:ignore="HardcodedText,RtlHardcoded,RtlSymmetry" />
+
+    </LinearLayout>
+
+</LinearLayout>

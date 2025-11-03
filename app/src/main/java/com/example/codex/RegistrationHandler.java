@@ -320,13 +320,15 @@ public class RegistrationHandler {
     }
 
     // --- Save user to Firebase ---
+    // --- Save user to Firebase ---
     private void saveToFirebase() {
         String firstName = regName.getText().toString().trim();
         String lastName = regLName.getText().toString().trim();
         String email = regEmail.getText().toString().trim();
         String password = regPassword.getText().toString().trim();
         String usertype = "Learner";
-        String classification = "";
+        String classification = "notClassified";
+        String learningMode = "none"; // <-- Added default value
 
         if (firstName.isEmpty() || lastName.isEmpty() || email.isEmpty() || password.isEmpty()) return;
         if (!isEmailValid || !isPasswordValid) return;
@@ -345,8 +347,10 @@ public class RegistrationHandler {
                             }
                         }
 
+                        // Updated User constructor or model usage
                         User user = new User(firstName, lastName, email, password, usertype, classification);
                         user.userId = newUserId;
+                        user.learningMode = learningMode; // <-- Added assignment
 
                         usersRef.child(String.valueOf(newUserId)).setValue(user)
                                 .addOnSuccessListener(aVoid -> {

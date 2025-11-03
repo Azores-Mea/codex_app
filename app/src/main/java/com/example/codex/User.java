@@ -3,6 +3,7 @@ package com.example.codex;
 public class User {
     public long userId;
     public String firstName, lastName, email, password, usertype, classification;
+    public String learningMode;
 
     public User() {}
 

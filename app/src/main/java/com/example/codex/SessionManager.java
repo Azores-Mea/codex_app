@@ -66,4 +66,9 @@ public class SessionManager {
         editor.clear();
         editor.apply();
     }
+
+    public void setClassification(String updatedClassification) {
+        editor.putString(KEY_CLASSIFICATION, updatedClassification);
+        editor.apply();
+    }
 }

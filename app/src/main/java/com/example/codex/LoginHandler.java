@@ -303,15 +303,11 @@ public class LoginHandler {
             View spaceViewMain = activity.findViewById(R.id.space);
             if (spaceViewMain != null) spaceViewMain.setVisibility(View.GONE);
 
-            if ("Admin".equalsIgnoreCase(userType)) {
-                Toast.makeText(activity, "Redirecting to Admin Dashboard...", Toast.LENGTH_SHORT).show();
-                // TODO: Launch AdminActivity if needed
-            } else if ("Learner".equalsIgnoreCase(userType)) {
-                Intent intent = new Intent(activity, Navigation_ActivityLearner.class);
-                activity.startActivity(intent);
-                activity.overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
-                activity.finish();
-            }
+            Intent intent = new Intent(activity, Navigation_ActivityLearner.class);
+            activity.startActivity(intent);
+            activity.overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+            activity.finish();
+
         });
     }
 

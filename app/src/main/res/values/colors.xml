@@ -4,6 +4,7 @@
     <color name="white">#FFFFFFFF</color>
     <color name="primary">#03162A</color>
     <color name="secondary">#4398F2</color>
+    <color name="tertiary">#E3AF64</color>
     <color name="dodger_blue_light">#4398F2</color>
     <color name="gray">#E0E0E0</color>
 
