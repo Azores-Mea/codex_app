@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical"
+    android:padding="10dp"
+
+    android:layout_gravity="center"
+    android:background="@drawable/dialogue_background"
+    android:layout_width="370dp"
+    android:layout_height="270dp">
+
+    <TextView
+        android:id="@+id/dialog_title"
+        android:text="Are you sure you want to continue?"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:layout_marginTop="30dp"
+        android:textColor="#09417D"
+        android:gravity="center"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <TextView
+        android:id="@+id/dialog_message"
+        android:layout_width="280dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginTop="8dp"
+        android:fontFamily="@font/roboto"
+        android:gravity="center"
+        android:text="You’ve selected Module Mode, giving you full access to all lessons and activities."
+        android:textColor="#09417D"
+        android:textSize="14sp" />
+    <TextView
+        android:id="@+id/dialog_note"
+        android:layout_width="280dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginTop="8dp"
+        android:fontFamily="@font/roboto"
+        android:gravity="center"
+        android:text="Note: You can’t change modes once selected."
+        android:textColor="#828687"
+        android:textSize="12sp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="68dp"
+        android:layout_marginTop="10dp"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:orientation="horizontal">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/no_btn"
+            android:layout_width="146dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:alpha=".8"
+            android:fontFamily="@font/roboto_medium"
+            android:text="No"
+            android:textAllCaps="false"
+            android:textColor="#E31414"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:translationZ="12dp"
+
+
+            app:backgroundTint="@color/white"
+            app:cornerRadius="10dp"
+            app:strokeColor="#E31414"
+            app:strokeWidth="2dp"
+            tools:ignore="HardcodedText,RtlHardcoded,RtlSymmetry" />
+
+        <View
+            android:id="@+id/space"
+            android:layout_width="20dp"
+            android:layout_height="60dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/yes_btn"
+            android:layout_width="146dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:fontFamily="@font/roboto_medium"
+            android:text="Yes"
+            android:textAllCaps="false"
+            android:textColor="#F5F5F5"
+            android:textSize="17sp"
+            android:textStyle="bold"
+
+            android:translationZ="12dp"
+            app:backgroundTint="#03162A"
+            app:cornerRadius="10dp"
+            tools:ignore="HardcodedText,RtlHardcoded,RtlSymmetry" />
+
+    </LinearLayout>
+
+</LinearLayout>

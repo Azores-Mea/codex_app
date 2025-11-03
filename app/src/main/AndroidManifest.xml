@@ -19,6 +19,7 @@
 
         </activity>
         <activity android:name=".Navigation_ActivityLearner" />
+        <activity android:name=".SelectionMode" />
         <activity
             android:name=".AddQuestionActivity"
             android:exported="false" />

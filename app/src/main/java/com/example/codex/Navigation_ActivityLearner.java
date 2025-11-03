@@ -25,8 +25,6 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
-import java.util.Objects;
-
 import homepage_learner.HomeFragment;
 import homepage_learner.LearnFragment;
 
@@ -67,6 +65,11 @@ public class Navigation_ActivityLearner extends AppCompatActivity {
         learnFragment = new LearnFragment();
         reviewFragment = new ReviewFragment();
         progressFragment = new ProgressFragment();
+
+        // Check intent extra to open Learn fragment directly
+        if (getIntent().getBooleanExtra("openLearnFragment", false)) {
+            openLearnFragment();
+        }
 
         BottomNavigationView bottomNavigationView = findViewById(R.id.bottomNavigationView);
         bottomNavigationView.setOnItemSelectedListener(item -> {
@@ -116,14 +119,17 @@ public class Navigation_ActivityLearner extends AppCompatActivity {
 
                 // Update UI immediately
                 runOnUiThread(() -> {
-                    String fullName = (firstName != null ? firstName : "User") +
-                            (lastName != null ? " " + lastName : "");
-                    userName.setText(fullName);
+                    userName.setText(firstName);
                     updateClassificationBadge(classification);
 
                     // Show initial test if not classified
                     if ("notClassified".equalsIgnoreCase(classification)) {
                         showInitialTest();
+                    }
+                    // ✅ NEW: show Choose Mode dialog for intermediate/advanced users
+                    else if ("intermediate".equalsIgnoreCase(classification) ||
+                            "advanced".equalsIgnoreCase(classification)) {
+                        showChooseModeDialog(classification);
                     }
                 });
 
@@ -188,7 +194,6 @@ public class Navigation_ActivityLearner extends AppCompatActivity {
 
         AlertDialog dialog = builder.create();
 
-        // Show dialog first, then safely access window
         if (!isFinishing() && !isDestroyed()) {
             dialog.show();
             if (dialog.getWindow() != null) {
@@ -229,7 +234,60 @@ public class Navigation_ActivityLearner extends AppCompatActivity {
             Intent intent = new Intent(this, InitialTestActivity.class);
             startActivity(intent);
             overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
-            // DO NOT finish() the navigation activity here - keep it in backstack so dialogs and windows remain valid
+        });
+    }
+
+    // ✅ Choose Mode dialog (redirects to SelectionMode activity)
+    private void showChooseModeDialog(String classification) {
+        LayoutInflater inflater = getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.dialog_ready_to_join, null);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setView(dialogView);
+
+        AlertDialog dialog = builder.create();
+
+        if (!isFinishing() && !isDestroyed()) {
+            dialog.show();
+            if (dialog.getWindow() != null) {
+                dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+                dialog.getWindow().setLayout(
+                        LinearLayout.LayoutParams.WRAP_CONTENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT
+                );
+                dialog.getWindow().setDimAmount(0.6f);
+            }
+        } else {
+            Log.w("NavigationLearner", "Activity finishing/destroyed - cannot show choose mode dialog");
+            return;
+        }
+
+        String firstName = userName.getText().toString();
+        TextView title = dialogView.findViewById(R.id.dialog_title);
+        title.setText("Hello, " + firstName + "!");
+        GradientTextUtil.applyGradient(title, "#03162A", "#0A4B90");
+
+        TextView message = dialogView.findViewById(R.id.dialog_message);
+        message.setText(Html.fromHtml("You can now select your learning mode.", Html.FROM_HTML_MODE_LEGACY));
+
+        MaterialButton btnCancel = dialogView.findViewById(R.id.no_btn);
+        MaterialButton btnSelect = dialogView.findViewById(R.id.yes_btn);
+
+        int redColor = Color.parseColor("#E31414");
+        btnCancel.setTextColor(redColor);
+        btnCancel.setStrokeColor(android.content.res.ColorStateList.valueOf(redColor));
+
+        btnCancel.setText("Cancel");
+        btnSelect.setText("Select Mode");
+
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
+
+        // ✅ Open SelectionMode activity instead of dialog
+        btnSelect.setOnClickListener(v -> {
+            dialog.dismiss();
+            Intent intent = new Intent(this, SelectionMode.class);
+            startActivity(intent);
+            overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
         });
     }
 }

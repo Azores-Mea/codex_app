@@ -52,6 +52,7 @@
 
 
         <LinearLayout
+            android:id="@+id/guided"
             android:layout_marginTop="30dp"
             android:layout_gravity="center"
             android:layout_width="372dp"
@@ -132,6 +133,7 @@
         </LinearLayout>
 
         <LinearLayout
+            android:id="@+id/module"
             android:layout_marginTop="30dp"
             android:layout_gravity="center"
             android:layout_width="372dp"
