@@ -1,7 +1,87 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+
+    <!-- ✅ Base Rounded Input Style -->
     <style name="RoundedTextInput" parent="">
         <item name="cornerFamily">rounded</item>
         <item name="cornerSize">5dp</item>
     </style>
+
+    <!-- ✅ Base Text Style (fixes "resource style/TextStyle not found") -->
+    <style name="TextStyle">
+        <item name="android:fontFamily">@font/roboto</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:lineSpacingExtra">2dp</item>
+        <item name="android:textColor">?android:attr/textColorPrimary</item>
+    </style>
+
+    <!-- 🧩 Header / Title Styles -->
+    <style name="TextStyle.H1">
+        <item name="android:fontFamily">@font/roboto_bold</item>
+        <item name="android:textSize">32sp</item>
+        <item name="android:letterSpacing">-0.02</item>
+    </style>
+
+    <style name="TextStyle.H2">
+        <item name="android:fontFamily">@font/roboto_bold</item>
+        <item name="android:textSize">24sp</item>
+        <item name="android:letterSpacing">-0.02</item>
+    </style>
+
+    <style name="TextStyle.H3">
+        <item name="android:fontFamily">@font/roboto_bold</item>
+        <item name="android:textSize">20sp</item>
+        <item name="android:letterSpacing">-0.02</item>
+    </style>
+
+    <!-- 🧩 Subtitle and Body Styles -->
+    <style name="TextStyle.Subtitle">
+        <item name="android:fontFamily">@font/roboto_medium</item>
+        <item name="android:textSize">18sp</item>
+    </style>
+
+    <style name="TextStyle.Body">
+        <item name="android:fontFamily">@font/roboto</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:lineSpacingExtra">4dp</item>
+    </style>
+
+    <style name="TextStyle.BodyBold">
+        <item name="android:fontFamily">@font/roboto_bold</item>
+        <item name="android:textSize">16sp</item>
+    </style>
+
+    <style name="TextStyle.Small">
+        <item name="android:fontFamily">@font/roboto_medium</item>
+        <item name="android:textSize">14sp</item>
+    </style>
+
+    <style name="TextStyle.PreTitle">
+        <item name="android:fontFamily">@font/roboto_bold</item>
+        <item name="android:textSize">10sp</item>
+        <item name="android:letterSpacing">0.03</item>
+    </style>
+
+    <style name="TextStyle.Button">
+        <item name="android:fontFamily">@font/roboto_bold</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:letterSpacing">0.03</item>
+        <item name="android:textAllCaps">true</item>
+    </style>
+
+    <style name="TextStyle.Link">
+        <item name="android:fontFamily">@font/roboto_bold</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:textColor">?attr/colorSecondary</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="TextStyle.Helper">
+        <item name="android:fontFamily">@font/roboto</item>
+        <item name="android:textSize">10sp</item>
+        <item name="android:letterSpacing">0.004</item>
+        <item name="android:lineSpacingExtra">3dp</item>
+        <item name="android:textColor">?attr/colorOnSurfaceVariant</item>
+    </style>
+
 </resources>

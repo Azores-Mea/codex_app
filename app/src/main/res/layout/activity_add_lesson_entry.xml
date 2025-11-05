@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal">
+
+        <EditText
+            android:id="@+id/lessonIdInput"
+            android:hint="Lesson ID"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
+        <EditText
+            android:id="@+id/subSectionIdInput"
+            android:hint="Sub Section ID"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"/>
+
+        <Spinner
+            android:id="@+id/sectionSpinner"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"/>
+
+        <!-- ======================= TITLE SECTION ======================= -->
+        <LinearLayout
+            android:id="@+id/titleSectionLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="visible">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="TITLE SECTION"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <EditText
+                android:id="@+id/titleInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Title (header2)" />
+
+            <EditText
+                android:id="@+id/descriptionInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Description" />
+
+            <EditText
+                android:id="@+id/helper1Drawable"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Drawable name for helper 1" />
+
+            <EditText
+                android:id="@+id/helper1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Helper text 1" />
+
+            <EditText
+                android:id="@+id/helper2Drawable"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Drawable name for helper 2" />
+
+            <EditText
+                android:id="@+id/helper2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Helper text 2" />
+
+            <EditText
+                android:id="@+id/helper3Drawable"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Drawable name for helper 3" />
+
+            <EditText
+                android:id="@+id/helper3"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Helper text 3" />
+        </LinearLayout>
+
+        <!-- ======================= EXAMPLE/TYPES SECTION ======================= -->
+        <LinearLayout
+            android:id="@+id/exampleSectionLayout"
+            android:orientation="vertical"
+            android:visibility="gone"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView android:text="EXAMPLE / TYPES SECTION" android:textStyle="bold" android:textSize="18sp"  android:layout_height="wrap_content" android:layout_width="wrap_content"/>
+
+            <EditText android:id="@+id/exampleTitleInput" android:hint="Example/Types"
+                android:layout_width="match_parent" android:layout_height="wrap_content"/>
+
+            <EditText android:id="@+id/exampleDescInput" android:hint="Short Description"
+                android:layout_width="match_parent" android:layout_height="wrap_content"/>
+
+            <EditText
+                android:id="@+id/helper4Drawable"
+                android:hint="Drawable name for helper 4"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+
+            <EditText
+                android:id="@+id/helper4"
+                android:hint="Helper text 4"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+
+            <EditText
+                android:id="@+id/helper5Drawable"
+                android:hint="Drawable name for helper 5"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+
+            <EditText
+                android:id="@+id/helper5"
+                android:hint="Helper text 5"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+
+        </LinearLayout>
+
+        <!-- ======================= SUBTITLE/OUTPUT ======================= -->
+        <LinearLayout
+            android:id="@+id/subtitleSectionLayout"
+            android:orientation="vertical"
+            android:visibility="gone"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView android:layout_height="wrap_content" android:layout_width="wrap_content" android:text="SUBTITLE / OUTPUT SECTION" android:textStyle="bold" android:textSize="18sp" />
+
+            <EditText android:id="@+id/subtitleInput" android:hint="Subtitle/Output"
+                android:layout_width="match_parent" android:layout_height="wrap_content"/>
+
+            <EditText
+                android:id="@+id/helper6Drawable"
+                android:hint="Drawable name for helper 6"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+
+            <EditText
+                android:id="@+id/helper6"
+                android:hint="Helper text 6"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+
+            <EditText
+                android:id="@+id/helper7Drawable"
+                android:hint="Drawable name for helper 7"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+
+            <EditText
+                android:id="@+id/helper7"
+                android:hint="Helper text 7"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+
+        </LinearLayout>
+
+        <!-- TOOLTIP -->
+        <LinearLayout
+            android:id="@+id/tooltipSectionLayout"
+            android:orientation="vertical"
+            android:visibility="gone"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView android:layout_height="wrap_content" android:layout_width="wrap_content" android:text="TOOLTIP SECTION" android:textStyle="bold" android:textSize="18sp" />
+
+            <EditText android:id="@+id/tooltipInput" android:hint="Tooltip (Tip)"
+                android:layout_width="match_parent" android:layout_height="wrap_content"/>
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/uploadBtn"
+            android:text="Upload Section"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:backgroundTint="#2196F3"
+            android:textColor="@android:color/white"/>
+    </LinearLayout>
+</ScrollView>

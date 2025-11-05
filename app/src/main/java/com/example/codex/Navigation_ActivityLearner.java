@@ -42,6 +42,7 @@ public class Navigation_ActivityLearner extends AppCompatActivity {
     private ValueEventListener userListener;
 
     private String userId; // store logged-in user ID
+    private BottomNavigationView bottomNavigationView; // make global for easy access
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,12 +67,8 @@ public class Navigation_ActivityLearner extends AppCompatActivity {
         reviewFragment = new ReviewFragment();
         progressFragment = new ProgressFragment();
 
-        // Check intent extra to open Learn fragment directly
-        if (getIntent().getBooleanExtra("openLearnFragment", false)) {
-            openLearnFragment();
-        }
-
-        BottomNavigationView bottomNavigationView = findViewById(R.id.bottomNavigationView);
+        // Setup bottom navigation
+        bottomNavigationView = findViewById(R.id.bottomNavigationView);
         bottomNavigationView.setOnItemSelectedListener(item -> {
             Fragment toShow = null;
             int id = item.getItemId();
@@ -93,6 +90,7 @@ public class Navigation_ActivityLearner extends AppCompatActivity {
             return true;
         });
 
+        // Load default fragments
         if (savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction()
                     .add(R.id.fragment_container, progressFragment, "progress").hide(progressFragment)
@@ -100,6 +98,16 @@ public class Navigation_ActivityLearner extends AppCompatActivity {
                     .add(R.id.fragment_container, learnFragment, "learn").hide(learnFragment)
                     .add(R.id.fragment_container, homeFragment, "home")
                     .commit();
+        }
+
+        // ✅ Listen for Start Learning button in HomeFragment
+        getSupportFragmentManager().setFragmentResultListener("openLearnFragmentRequest", this, (requestKey, bundle) -> {
+            openLearnFragment();
+        });
+
+        // ✅ Check intent extra to open Learn fragment directly (optional)
+        if (getIntent().getBooleanExtra("openLearnFragment", false)) {
+            openLearnFragment();
         }
 
         // Setup Firebase listener for real-time updates
@@ -117,17 +125,13 @@ public class Navigation_ActivityLearner extends AppCompatActivity {
                 String lastName = snapshot.child("lastName").getValue(String.class);
                 String classification = snapshot.child("classification").getValue(String.class);
 
-                // Update UI immediately
                 runOnUiThread(() -> {
                     userName.setText(firstName);
                     updateClassificationBadge(classification);
 
-                    // Show initial test if not classified
                     if ("notClassified".equalsIgnoreCase(classification)) {
                         showInitialTest();
-                    }
-                    // ✅ NEW: show Choose Mode dialog for intermediate/advanced users
-                    else if ("intermediate".equalsIgnoreCase(classification) ||
+                    } else if ("intermediate".equalsIgnoreCase(classification) ||
                             "advanced".equalsIgnoreCase(classification)) {
                         showChooseModeDialog(classification);
                     }
@@ -172,6 +176,7 @@ public class Navigation_ActivityLearner extends AppCompatActivity {
         }
     }
 
+    // ✅ Public method to show LearnFragment
     public void openLearnFragment() {
         FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
         Fragment[] fragments = {homeFragment, learnFragment, reviewFragment, progressFragment};
@@ -181,8 +186,9 @@ public class Navigation_ActivityLearner extends AppCompatActivity {
         }
         ft.commit();
 
-        BottomNavigationView bottomNavigationView = findViewById(R.id.bottomNavigationView);
-        bottomNavigationView.setSelectedItemId(R.id.learn);
+        if (bottomNavigationView != null) {
+            bottomNavigationView.setSelectedItemId(R.id.learn);
+        }
     }
 
     private void showInitialTest() {
@@ -228,7 +234,6 @@ public class Navigation_ActivityLearner extends AppCompatActivity {
         btnYes.setText("Take");
 
         btnNo.setOnClickListener(v -> dialog.dismiss());
-
         btnYes.setOnClickListener(v -> {
             dialog.dismiss();
             Intent intent = new Intent(this, InitialTestActivity.class);
@@ -237,57 +242,70 @@ public class Navigation_ActivityLearner extends AppCompatActivity {
         });
     }
 
-    // ✅ Choose Mode dialog (redirects to SelectionMode activity)
     private void showChooseModeDialog(String classification) {
-        LayoutInflater inflater = getLayoutInflater();
-        View dialogView = inflater.inflate(R.layout.dialog_ready_to_join, null);
+        // Fetch the user's learningMode from Firebase
+        userRef.child("learningMode").get().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                String learningMode = task.getResult().getValue(String.class);
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setView(dialogView);
+                // Check if learningMode is "none", only then show the dialog
+                if (learningMode != null && "none".equalsIgnoreCase(learningMode)) {
+                    // Proceed to show the dialog if learningMode is "none"
+                    LayoutInflater inflater = getLayoutInflater();
+                    View dialogView = inflater.inflate(R.layout.dialog_ready_to_join, null);
 
-        AlertDialog dialog = builder.create();
+                    AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                    builder.setView(dialogView);
 
-        if (!isFinishing() && !isDestroyed()) {
-            dialog.show();
-            if (dialog.getWindow() != null) {
-                dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
-                dialog.getWindow().setLayout(
-                        LinearLayout.LayoutParams.WRAP_CONTENT,
-                        LinearLayout.LayoutParams.WRAP_CONTENT
-                );
-                dialog.getWindow().setDimAmount(0.6f);
+                    AlertDialog dialog = builder.create();
+
+                    if (!isFinishing() && !isDestroyed()) {
+                        dialog.show();
+                        if (dialog.getWindow() != null) {
+                            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+                            dialog.getWindow().setLayout(
+                                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                                    LinearLayout.LayoutParams.WRAP_CONTENT
+                            );
+                            dialog.getWindow().setDimAmount(0.6f);
+                        }
+                    } else {
+                        Log.w("NavigationLearner", "Activity finishing/destroyed - cannot show choose mode dialog");
+                        return;
+                    }
+
+                    String firstName = userName.getText().toString();
+                    TextView title = dialogView.findViewById(R.id.dialog_title);
+                    title.setText("Hello, " + firstName + "!");
+                    GradientTextUtil.applyGradient(title, "#03162A", "#0A4B90");
+
+                    TextView message = dialogView.findViewById(R.id.dialog_message);
+                    message.setText(Html.fromHtml("You can now select your learning mode.", Html.FROM_HTML_MODE_LEGACY));
+
+                    MaterialButton btnCancel = dialogView.findViewById(R.id.no_btn);
+                    MaterialButton btnSelect = dialogView.findViewById(R.id.yes_btn);
+
+                    int redColor = Color.parseColor("#E31414");
+                    btnCancel.setTextColor(redColor);
+                    btnCancel.setStrokeColor(android.content.res.ColorStateList.valueOf(redColor));
+
+                    btnCancel.setText("Cancel");
+                    btnSelect.setText("Select Mode");
+
+                    btnCancel.setOnClickListener(v -> dialog.dismiss());
+                    btnSelect.setOnClickListener(v -> {
+                        dialog.dismiss();
+                        Intent intent = new Intent(this, SelectionMode.class);
+                        startActivity(intent);
+                        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+                    });
+                } else {
+                    // If learningMode is not "none", skip showing the dialog
+                    Log.d("NavigationLearner", "User already has a learning mode set, skipping Choose Mode dialog.");
+                }
+            } else {
+                Log.e("NavigationLearner", "Failed to retrieve learningMode: " + task.getException());
             }
-        } else {
-            Log.w("NavigationLearner", "Activity finishing/destroyed - cannot show choose mode dialog");
-            return;
-        }
-
-        String firstName = userName.getText().toString();
-        TextView title = dialogView.findViewById(R.id.dialog_title);
-        title.setText("Hello, " + firstName + "!");
-        GradientTextUtil.applyGradient(title, "#03162A", "#0A4B90");
-
-        TextView message = dialogView.findViewById(R.id.dialog_message);
-        message.setText(Html.fromHtml("You can now select your learning mode.", Html.FROM_HTML_MODE_LEGACY));
-
-        MaterialButton btnCancel = dialogView.findViewById(R.id.no_btn);
-        MaterialButton btnSelect = dialogView.findViewById(R.id.yes_btn);
-
-        int redColor = Color.parseColor("#E31414");
-        btnCancel.setTextColor(redColor);
-        btnCancel.setStrokeColor(android.content.res.ColorStateList.valueOf(redColor));
-
-        btnCancel.setText("Cancel");
-        btnSelect.setText("Select Mode");
-
-        btnCancel.setOnClickListener(v -> dialog.dismiss());
-
-        // ✅ Open SelectionMode activity instead of dialog
-        btnSelect.setOnClickListener(v -> {
-            dialog.dismiss();
-            Intent intent = new Intent(this, SelectionMode.class);
-            startActivity(intent);
-            overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
         });
     }
 }

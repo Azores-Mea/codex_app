@@ -1,8 +1,6 @@
 package homepage_learner;
 
 import android.content.Intent;
-import android.content.res.ColorStateList;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -20,6 +18,7 @@ import androidx.fragment.app.Fragment;
 import com.example.codex.Navigation_ActivityLearner;
 import com.example.codex.R;
 import com.example.codex.SessionManager;
+import com.google.android.material.button.MaterialButton;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -29,15 +28,9 @@ import com.google.firebase.database.ValueEventListener;
 public class HomeFragment extends Fragment {
 
     private LinearLayout currentLearner, scoreHistoryContainer;
-    private CardView lessonHistory, newLearner, continueLessonCard;
-    private DatabaseReference dbRefAct, dbRefLesson, userRef;
+    private CardView newLearner;
+    private DatabaseReference dbRefAct, userRef;
     private SessionManager sessionManager;
-
-    private TextView lessonTitleView, lessonDescView, lessonProgressView;
-    private ProgressBar lessonProgressBar;
-
-    private TextView contLessonTitle, contChapter;
-    private ProgressBar contProgressBar;
 
     private TextView userName, userClass;
     private ImageView avatar;
@@ -58,32 +51,27 @@ public class HomeFragment extends Fragment {
         avatar = view.findViewById(R.id.imageViewAvatar);
         TextView greetName = view.findViewById(R.id.learner_name);
 
-        // ---------- LESSON / SCORE VIEWS ----------
+        // ---------- SCORE VIEWS ----------
         currentLearner = view.findViewById(R.id.current_learner);
         scoreHistoryContainer = view.findViewById(R.id.scoreHistoryContainer);
-        lessonHistory = view.findViewById(R.id.lessonHistory);
         newLearner = view.findViewById(R.id.new_learner);
-        continueLessonCard = view.findViewById(R.id.continue_lesson);
 
-        lessonTitleView = view.findViewById(R.id.lesson_title);
-        lessonDescView = view.findViewById(R.id.lesson_desc);
-        lessonProgressView = view.findViewById(R.id.lesson_progress);
-        lessonProgressBar = view.findViewById(R.id.progressBar);
-
-        contLessonTitle = view.findViewById(R.id.cont_lesson_title);
-        contChapter = view.findViewById(R.id.chapter);
-        contProgressBar = view.findViewById(R.id.ProgressBar);
-
-        hideAllSections();
+        showNewLearner();
 
         // ---------- FIREBASE REFERENCES ----------
         dbRefAct = FirebaseDatabase.getInstance().getReference("RecentAct");
-        dbRefLesson = FirebaseDatabase.getInstance().getReference("RecentLesson");
 
         // ---------- NEW LEARNER BUTTON ----------
         newLearner.setOnClickListener(v -> {
             Intent intent = new Intent(getActivity(), Navigation_ActivityLearner.class);
             startActivity(intent);
+        });
+
+        MaterialButton startLearning = view.findViewById(R.id.start_learning);
+        startLearning.setOnClickListener(v -> {
+            // Notify the parent activity to switch to LearnFragment
+            Bundle result = new Bundle();
+            getParentFragmentManager().setFragmentResult("openLearnFragmentRequest", result);
         });
 
         if (sessionManager.isLoggedIn()) {
@@ -93,7 +81,6 @@ public class HomeFragment extends Fragment {
             if (userId != -1) {
                 userRef = FirebaseDatabase.getInstance().getReference("Users").child(String.valueOf(userId));
                 attachUserListener(greetName);
-                attachLessonListener(userId);
                 attachScoreListener(userId);
             } else {
                 showNewLearner();
@@ -146,40 +133,6 @@ public class HomeFragment extends Fragment {
         userRef.addValueEventListener(userListener);
     }
 
-    private void attachLessonListener(int userId) {
-        dbRefLesson.orderByChild("userId").equalTo(userId)
-                .addValueEventListener(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        if (!snapshot.exists() || !snapshot.hasChildren()) {
-                            hideLessonSections();
-                            showNewLearner();
-                            return;
-                        }
-
-                        showCurrentLearner();
-
-                        for (DataSnapshot record : snapshot.getChildren()) {
-                            String title = record.child("lessonTitle").getValue(String.class);
-                            if (title == null) continue;
-
-                            String desc = record.child("lessonDesc").getValue(String.class);
-                            Long completedLong = record.child("completed").getValue(Long.class);
-                            Long totalLong = record.child("totalLessons").getValue(Long.class);
-
-                            int completed = completedLong != null ? completedLong.intValue() : 0;
-                            int total = (totalLong != null && totalLong > 0) ? totalLong.intValue() : 1;
-
-                            updateLessonUI(title, desc, completed, total);
-                            break;
-                        }
-                    }
-
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError error) {}
-                });
-    }
-
     private void attachScoreListener(int userId) {
         Log.d("HomeFragment", "Listening for RecentAct userId: " + userId);
         dbRefAct.child(String.valueOf(userId))
@@ -189,16 +142,10 @@ public class HomeFragment extends Fragment {
                         Log.d("HomeFragment", "Score Snapshot Exists: " + snapshot.exists() +
                                 " | Children: " + snapshot.getChildrenCount());
 
-                        for (DataSnapshot record : snapshot.getChildren()) {
-                            Log.d("HomeFragment", "Record key: " + record.getKey());
-                            for (DataSnapshot field : record.getChildren()) {
-                                Log.d("HomeFragment", "   " + field.getKey() + " = " + field.getValue());
-                            }
-                        }
-
                         if (!snapshot.exists() || snapshot.getChildrenCount() == 0) {
                             Log.w("HomeFragment", "No RecentAct data found for user " + userId);
-                            scoreHistoryContainer.removeAllViews();
+                            hideAllSections();
+                            showNewLearner();
                             return;
                         }
 
@@ -217,31 +164,20 @@ public class HomeFragment extends Fragment {
         scoreHistoryContainer.removeAllViews();
         LayoutInflater inflater = LayoutInflater.from(getContext());
 
-        Log.d("HomeFragment", "Loading score history: " + snapshot.getChildrenCount());
-
         for (DataSnapshot record : snapshot.getChildren()) {
             String title = record.child("title").getValue(String.class);
             Long score = record.child("score").getValue(Long.class);
             Long items = record.child("items").getValue(Long.class);
-            String timestamp = record.child("timestamp").getValue(String.class);
-
-            Log.d("HomeFragment", "Loaded record: " + title + " | score=" + score + "/" + items);
 
             View scoreView = inflater.inflate(R.layout.recent_scores, scoreHistoryContainer, false);
             TextView titleView = scoreView.findViewById(R.id.testTitle);
             TextView scoreViewText = scoreView.findViewById(R.id.testScore);
-
-            if (titleView == null || scoreViewText == null) {
-                Log.e("HomeFragment", "recent_scores.xml missing TextViews!");
-                continue;
-            }
 
             titleView.setText(title != null ? title : "Untitled Test");
 
             long totalItems = (items != null) ? items : 20;
             long scoreValue = (score != null) ? score : 0;
             scoreViewText.setText("Score: " + scoreValue + "/" + totalItems);
-
 
             scoreHistoryContainer.addView(scoreView);
         }
@@ -253,55 +189,22 @@ public class HomeFragment extends Fragment {
         }
     }
 
-    private void updateLessonUI(String title, String desc, int completed, int total) {
-        lessonTitleView.setText(title);
-        lessonDescView.setText(desc != null ? desc : "No description available");
-        lessonProgressView.setText(completed + "/" + total + " lessons");
-
-        lessonProgressBar.setMax(total);
-        lessonProgressBar.setProgress(completed);
-
-        contLessonTitle.setText(title);
-        contChapter.setText("CHAPTER " + completed);
-        contProgressBar.setMax(total);
-        contProgressBar.setProgress(completed);
-        contProgressBar.setProgressTintList(ColorStateList.valueOf(Color.parseColor("#03162A")));
-        contProgressBar.setProgressBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#B0BEC5")));
-
-        continueLessonCard.setVisibility(View.VISIBLE);
-        lessonHistory.setVisibility(View.VISIBLE);
-    }
-
     private void showCurrentLearner() {
-        currentLearner.setVisibility(View.VISIBLE);
+        currentLearner.setVisibility(View.GONE);
         scoreHistoryContainer.setVisibility(View.VISIBLE);
-        lessonHistory.setVisibility(View.VISIBLE);
-        continueLessonCard.setVisibility(View.VISIBLE);
-        newLearner.setVisibility(View.GONE);
+        newLearner.setVisibility(View.VISIBLE); // keep visible alongside score history
     }
 
     private void showNewLearner() {
         currentLearner.setVisibility(View.GONE);
         scoreHistoryContainer.setVisibility(View.GONE);
-        lessonHistory.setVisibility(View.GONE);
-        continueLessonCard.setVisibility(View.GONE);
         newLearner.setVisibility(View.VISIBLE);
     }
 
     private void hideAllSections() {
         currentLearner.setVisibility(View.GONE);
         scoreHistoryContainer.setVisibility(View.GONE);
-        lessonHistory.setVisibility(View.GONE);
-        continueLessonCard.setVisibility(View.GONE);
         newLearner.setVisibility(View.GONE);
-    }
-
-    private void hideLessonSections() {
-        lessonTitleView.setText("");
-        lessonDescView.setText("");
-        lessonProgressView.setText("");
-        lessonProgressBar.setProgress(0);
-        continueLessonCard.setVisibility(View.GONE);
     }
 
     @Override

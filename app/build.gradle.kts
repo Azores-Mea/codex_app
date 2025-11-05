@@ -34,6 +34,7 @@ android {
 
 dependencies {
 
+    implementation("com.github.amrdeveloper:codeview:1.3.3")
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)
@@ -41,6 +42,7 @@ dependencies {
     implementation(libs.cardview)
     implementation(libs.firebase.database)
     implementation(libs.firebase.auth)
+    implementation(libs.firebase.storage)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)

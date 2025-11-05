@@ -4,4 +4,10 @@
     <item name="dialog_message" type="id" />
     <item name="no_btn" type="id" />
     <item name="yes_btn" type="id" />
+    <item name="exampleTitleInput" type="id" />
+    <item name="exampleDescInput" type="id" />
+    <item name="exampleImg1" type="id" />
+    <item name="chooseExampleImg1Btn" type="id" />
+    <item name="exampleImg2" type="id" />
+    <item name="chooseExampleImg2Btn" type="id" />
 </resources>

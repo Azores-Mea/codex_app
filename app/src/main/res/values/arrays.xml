@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="section_types">
+        <item>titles</item>
+        <item>examples</item>
+        <item>subtitles</item>
+        <item>tooltips</item>
+    </string-array>
+</resources>

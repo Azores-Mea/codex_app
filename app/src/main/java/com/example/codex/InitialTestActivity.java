@@ -177,7 +177,7 @@ public class InitialTestActivity extends AppCompatActivity {
         progressQuestion.setText((index + 1) + " of " + questionList.size() + " Questions");
 
         progressBar.setMax(100);
-        int percent = (int) (((index + 1) / (float) questionList.size()) * 100);
+        int percent = (int) (((index) / (float) questionList.size()) * 100);
         progressBar.setProgress(percent);
         progressPercent.setText(percent + "%");
 
@@ -435,49 +435,63 @@ public class InitialTestActivity extends AppCompatActivity {
             }
         } else {
             Log.w("InitialTestActivity", "Activity finishing/destroyed - cannot show final dialog");
-            // fallback: navigate back to nav activity
             startActivity(new Intent(InitialTestActivity.this, Navigation_ActivityLearner.class));
             finish();
             return;
         }
 
+        // Bind views
         TextView title = dialogView.findViewById(R.id.dialog_title);
-        TextView className = dialogView.findViewById(R.id.className);
-        TextView percent = dialogView.findViewById(R.id.percent);
-        TextView scoreText = dialogView.findViewById(R.id.score);
         TextView classText = dialogView.findViewById(R.id.classText);
+        TextView scoreText = dialogView.findViewById(R.id.score);
         MaterialButton btnContinue = dialogView.findViewById(R.id.yes_btn);
 
-        GradientTextUtil.applyGradient(title, "#03162A", "#0A4B90");
-        scoreText.setText("Score: " + score + "/" + totalQuestions);
+        // Classification card elements
+        MaterialCardView classCard = dialogView.findViewById(R.id.classification);
+        LinearLayout classBg = dialogView.findViewById(R.id.classBg);
+        TextView className = dialogView.findViewById(R.id.className);
+        TextView percent = dialogView.findViewById(R.id.percent);
 
+        // Apply gradient to title
+        GradientTextUtil.applyGradient(title, "#03162A", "#0A4B90");
+
+        // Calculate percentage
         int percentage = (int) (((float) score / totalQuestions) * 100);
+        scoreText.setText("Score: " + score + "/" + totalQuestions);
         percent.setText(percentage + "%");
 
+        // Colors based on classification
         int colorText;
         int colorStroke;
+        String bgColor;
 
         if (classification.equals("Beginner")) {
             colorText = Color.parseColor("#E3AF64");
             colorStroke = Color.parseColor("#E3AF64");
+            bgColor = "#FFF4E3";
             classText.setText("Every expert starts somewhere — keep learning!");
         } else if (classification.equals("Intermediate")) {
             colorText = Color.parseColor("#66ABF4");
             colorStroke = Color.parseColor("#66ABF4");
+            bgColor = "#E3F1FF";
             classText.setText("You’re getting better — stay consistent and curious!");
         } else {
             colorText = Color.parseColor("#A666F4");
             colorStroke = Color.parseColor("#A666F4");
+            bgColor = "#F3E8FF";
             classText.setText("Excellent work — you’ve mastered this test!");
         }
 
+        // Apply colors dynamically
         className.setText(classification);
         className.setTextColor(colorText);
-        className.setBackgroundTintList(ColorStateList.valueOf(colorStroke));
+        percent.setTextColor(colorText);
+        classCard.setStrokeColor(colorStroke);
+        classBg.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor(bgColor)));
 
+        // Continue button
         btnContinue.setOnClickListener(v -> {
             dialog.dismiss();
-            // navigate back to the navigation activity (main UI)
             Intent intent = new Intent(InitialTestActivity.this, Navigation_ActivityLearner.class);
             startActivity(intent);
             finish();
