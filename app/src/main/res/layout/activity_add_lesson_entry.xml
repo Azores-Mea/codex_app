@@ -15,7 +15,24 @@
             android:hint="Lesson ID"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"/>
+        <EditText
+            android:id="@+id/lessonDif"
+            android:hint="Beginner/Advanced/Intermediate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
 
+        <EditText
+            android:id="@+id/main_title"
+            android:hint="Main Title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"/>
+        <EditText
+            android:id="@+id/titleDesc"
+            android:hint="Title Desc"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"/>
         <EditText
             android:id="@+id/subSectionIdInput"
             android:hint="Sub Section ID"
@@ -63,6 +80,12 @@
                 android:hint="Drawable name for helper 1" />
 
             <EditText
+                android:id="@+id/helper1Code"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Code1" />
+
+            <EditText
                 android:id="@+id/helper1"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -75,6 +98,12 @@
                 android:hint="Drawable name for helper 2" />
 
             <EditText
+                android:id="@+id/helper2Code"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Code2" />
+
+            <EditText
                 android:id="@+id/helper2"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -85,6 +114,12 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="Drawable name for helper 3" />
+
+            <EditText
+                android:id="@+id/helper3Code"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Code3" />
 
             <EditText
                 android:id="@+id/helper3"
@@ -116,6 +151,12 @@
                 android:layout_height="wrap_content"/>
 
             <EditText
+                android:id="@+id/helper4Code"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Code4" />
+
+            <EditText
                 android:id="@+id/helper4"
                 android:hint="Helper text 4"
                 android:layout_width="match_parent"
@@ -126,6 +167,12 @@
                 android:hint="Drawable name for helper 5"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"/>
+
+            <EditText
+                android:id="@+id/helper5Code"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Code5" />
 
             <EditText
                 android:id="@+id/helper5"
@@ -155,6 +202,12 @@
                 android:layout_height="wrap_content"/>
 
             <EditText
+                android:id="@+id/helper6Code"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Code6" />
+
+            <EditText
                 android:id="@+id/helper6"
                 android:hint="Helper text 6"
                 android:layout_width="match_parent"
@@ -165,6 +218,12 @@
                 android:hint="Drawable name for helper 7"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"/>
+
+            <EditText
+                android:id="@+id/helper7Code"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Code7" />
 
             <EditText
                 android:id="@+id/helper7"

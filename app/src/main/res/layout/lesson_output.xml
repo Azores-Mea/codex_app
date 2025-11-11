@@ -30,6 +30,13 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             app:srcCompat="@drawable/imagesample" />
+        <WebView
+            android:id="@+id/code6"
+            android:layout_width="329dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:background="@null"
+            tools:ignore="WebViewLayout" />
         <TextView
             android:id="@+id/helper6"
             style="@style/TextStyle.Helper"
@@ -47,6 +54,13 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             app:srcCompat="@drawable/imagesample" />
+        <WebView
+            android:id="@+id/code7"
+            android:layout_width="329dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:background="@null"
+            tools:ignore="WebViewLayout" />
         <TextView
             android:id="@+id/helper7"
             style="@style/TextStyle.Helper"

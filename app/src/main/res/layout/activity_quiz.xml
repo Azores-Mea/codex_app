@@ -29,7 +29,6 @@
                 app:srcCompat="@drawable/back_arrow_icon" />
 
             <TextView
-                android:id="@+id/test_title"
                 android:layout_width="304dp"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
@@ -186,7 +185,8 @@
 
                         <TextView
                             android:id="@+id/choiceAText"
-                            android:layout_width="245dp"
+                            android:layout_width="272dp"
+                            android:layout_marginRight="15dp"
                             android:layout_height="37dp"
                             android:layout_gravity="center_vertical"
                             android:layout_marginLeft="10dp"

@@ -36,7 +36,7 @@ public class Code_example extends AppCompatActivity {
                 "</head>" +
                 "<body style='background:#FFFFFF; margin:0; padding:12px;'>" +
 
-                "<pre style='font-size:14px; font-weight:600; font-family:monospace;'>" +   // ✅ Semi-bold
+                "<pre style='font-size:12px; font-weight:600; font-family:monospace;'>" +   // ✅ Semi-bold
                 "<code class='language-java'>" +
                 code +
                 "</code></pre>" +

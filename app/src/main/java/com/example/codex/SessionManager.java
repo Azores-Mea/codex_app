@@ -13,6 +13,8 @@ public class SessionManager {
     private static final String KEY_USER_TYPE = "userType";
     private static final String KEY_USER_ID = "userId";
     private static final String KEY_IS_LOGGED_IN = "isLoggedIn";
+    private static final String KEY_SELECTED_LESSON = "selectedLesson";
+    private static final String KEY_LESSON_DIFFICULTY = "lessonDifficulty"; // ✅ new
 
     private final SharedPreferences prefs;
     private final SharedPreferences.Editor editor;
@@ -34,33 +36,14 @@ public class SessionManager {
         editor.apply();
     }
 
-    public boolean isLoggedIn() {
-        return prefs.getBoolean(KEY_IS_LOGGED_IN, false);
-    }
+    public boolean isLoggedIn() { return prefs.getBoolean(KEY_IS_LOGGED_IN, false); }
 
-    public String getEmail() {
-        return prefs.getString(KEY_EMAIL, "");
-    }
-
-    public String getFirstName() {
-        return prefs.getString(KEY_FIRST_NAME, "");
-    }
-
-    public String getLastName() {
-        return prefs.getString(KEY_LAST_NAME, "");
-    }
-
-    public String getClassification() {
-        return prefs.getString(KEY_CLASSIFICATION, "");
-    }
-
-    public String getUserType() {
-        return prefs.getString(KEY_USER_TYPE, "");
-    }
-
-    public int getUserId() {
-        return prefs.getInt(KEY_USER_ID, -1);
-    }
+    public String getEmail() { return prefs.getString(KEY_EMAIL, ""); }
+    public String getFirstName() { return prefs.getString(KEY_FIRST_NAME, ""); }
+    public String getLastName() { return prefs.getString(KEY_LAST_NAME, ""); }
+    public String getClassification() { return prefs.getString(KEY_CLASSIFICATION, ""); }
+    public String getUserType() { return prefs.getString(KEY_USER_TYPE, ""); }
+    public int getUserId() { return prefs.getInt(KEY_USER_ID, -1); }
 
     public void logout() {
         editor.clear();
@@ -70,5 +53,30 @@ public class SessionManager {
     public void setClassification(String updatedClassification) {
         editor.putString(KEY_CLASSIFICATION, updatedClassification);
         editor.apply();
+    }
+
+    // ✅ Save and retrieve selected lesson
+    public void saveSelectedLesson(String lessonId) {
+        editor.putString(KEY_SELECTED_LESSON, lessonId);
+        editor.apply();
+    }
+
+    public String getSelectedLesson() {
+        return prefs.getString(KEY_SELECTED_LESSON, null);
+    }
+
+    public void clearSelectedLesson() {
+        editor.remove(KEY_SELECTED_LESSON);
+        editor.apply();
+    }
+
+    // ✅ NEW: Save and retrieve lesson difficulty
+    public void saveLessonDifficulty(String difficulty) {
+        editor.putString(KEY_LESSON_DIFFICULTY, difficulty);
+        editor.apply();
+    }
+
+    public String getLessonDifficulty() {
+        return prefs.getString(KEY_LESSON_DIFFICULTY, "");
     }
 }

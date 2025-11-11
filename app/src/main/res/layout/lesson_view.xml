@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
     <!-- Header Section -->
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="90dp"
         android:background="@color/primary"
@@ -17,33 +18,46 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
+            android:layout_marginStart="16dp"
             android:layout_weight="1"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
             app:srcCompat="@drawable/back_arrow_icon" />
 
         <TextView
-            android:layout_width="304dp"
+            android:id="@+id/main_title"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
+            android:layout_marginStart="4dp"
             android:layout_weight="1"
+            android:ellipsize="end"
             android:fontFamily="@font/roboto_bold"
+            android:maxLines="1"
+            android:paddingStart="8dp"
+            android:paddingEnd="16dp"
+            android:scrollHorizontally="false"
+            android:singleLine="true"
             android:text="Introduction to Java"
             android:textColor="@color/bgText"
-            android:textSize="32sp" />
+            android:textSize="32sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/back"
+            app:layout_constraintTop_toTopOf="parent" />
 
-    </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <!-- Scrollable Content -->
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent">
-
         <LinearLayout
             android:id="@+id/lesson_container"
             android:orientation="vertical"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
         </LinearLayout>
-
     </ScrollView>
 
 </LinearLayout>

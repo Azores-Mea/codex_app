@@ -15,7 +15,7 @@
 
         <TextView
             android:id="@+id/title"
-            style="@style/TextStyle.H1"
+            style="@style/TextStyle.H2"
             android:layout_width="335dp"
             android:layout_height="75dp"
             android:layout_gravity="center"
@@ -40,6 +40,14 @@
             android:layout_height="wrap_content"
             app:srcCompat="@drawable/imagesample" />
 
+        <WebView
+            android:id="@+id/code1"
+            android:layout_width="329dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:background="@null"
+            tools:ignore="WebViewLayout" />
+
         <TextView
             android:id="@+id/helper1"
             style="@style/TextStyle.Helper"
@@ -57,6 +65,13 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             app:srcCompat="@drawable/imagesample" />
+        <WebView
+            android:id="@+id/code2"
+            android:layout_width="329dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:background="@null"
+            tools:ignore="WebViewLayout" />
 
         <TextView
             android:id="@+id/helper2"
@@ -74,6 +89,13 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             app:srcCompat="@drawable/imagesample" />
+        <WebView
+            android:id="@+id/code3"
+            android:layout_width="329dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:background="@null"
+            tools:ignore="WebViewLayout" />
         <TextView
             android:id="@+id/helper3"
             style="@style/TextStyle.Helper"

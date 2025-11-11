@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/layoutBeginnerLessons"
+    android:layout_width="match_parent"
+    android:layout_height="190dp"
+    android:layout_gravity="center"
+    android:orientation="vertical"
+    android:paddingHorizontal="20dp"
+    android:background="@android:color/white">
+
+    <!-- LESSON 1 -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/lesson1"
+        android:layout_width="302dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="center"
+        android:layout_marginBottom="10dp"
+        android:clickable="true"
+        android:focusable="true"
+        app:cardBackgroundColor="@android:color/white"
+        app:cardCornerRadius="5dp"
+        app:cardUseCompatPadding="true"
+        app:strokeColor="#E3AF64"
+        app:strokeWidth="1dp">
+
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:id="@+id/difficulty"
+                android:layout_width="64dp"
+                android:layout_height="19dp"
+                android:layout_marginStart="16dp"
+                android:layout_marginTop="10dp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:srcCompat="@drawable/beginner_classifier" />
+
+            <TextView
+                android:id="@+id/l_title"
+                style="@style/TextStyle.Subtitle"
+                android:layout_width="216dp"
+                android:layout_height="24dp"
+                android:layout_marginTop="20dp"
+                android:text="Introduction to Java"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.176"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/difficulty" />
+
+            <TextView
+                android:id="@+id/l_about"
+                style="@style/TextStyle.Small"
+                android:layout_width="208dp"
+                android:layout_height="55dp"
+                android:layout_marginBottom="20dp"
+                android:gravity="center_vertical"
+                android:text="Learn the basics of Java programming language, syntax, and fundamental concepts"
+                android:textColor="#353E41"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.219"
+                app:layout_constraintStart_toStartOf="parent" />
+
+            <ImageView
+                android:id="@+id/l_progress"
+                android:layout_width="25dp"
+                android:layout_height="22dp"
+                android:layout_weight="1"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.952"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintVertical_bias="0.496"
+                app:srcCompat="@drawable/lesson_complete" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </com.google.android.material.card.MaterialCardView>
+</LinearLayout>
