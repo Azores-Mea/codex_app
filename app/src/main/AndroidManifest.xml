@@ -14,17 +14,9 @@
         <activity
             android:name=".InitialTestActivity"
             android:exported="true">
-
-
-
         </activity>
         <activity android:name=".Navigation_ActivityLearner"
             android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
         </activity>
 
         <activity android:name=".SelectionMode" />
@@ -37,6 +29,11 @@
 
         <activity android:name=".MainActivity"
             android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
 
         </activity>
 
