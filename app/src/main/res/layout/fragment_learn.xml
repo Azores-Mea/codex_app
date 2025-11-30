@@ -1,386 +1,567 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:fillViewport="true"
-    android:background="@color/white">
+    android:layout_height="match_parent">
 
-    <LinearLayout
+    <!-- Main Content -->
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        android:background="@color/white">
 
-        <!-- Header Section -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="237dp"
-            android:background="#001F3F"
-            android:orientation="vertical"
-            android:padding="20dp">
-
-            <!-- User Info Row -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <!-- Name + Level -->
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:id="@+id/tvUserName"
-                        android:layout_width="282dp"
-                        android:paddingLeft="10dp"
-                        android:layout_height="wrap_content"
-                        android:text="Juan Dela Cruz"
-                        android:textColor="@android:color/white"
-                        android:textSize="20sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/tvLevel"
-                        android:layout_marginLeft="10dp"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:background="@drawable/beginner_classifier"
-                        android:paddingHorizontal="8dp"
-                        android:paddingVertical="2dp"
-                        android:textColor="#FFA726"
-                        android:textSize="12sp" />
-                </LinearLayout>
-
-                <!-- Circular Progress -->
-                <FrameLayout
-                    android:id="@+id/progressContainer"
-                    android:layout_width="80dp"
-                    android:layout_height="80dp"
-                    android:layout_gravity="center">
-
-                    <ProgressBar
-                        android:id="@+id/progressCircle"
-                        style="?android:attr/progressBarStyleHorizontal"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:indeterminate="false"
-                        android:max="100"
-                        android:progress="0"
-                        android:progressDrawable="@drawable/full_circular_progress"
-                        android:rotation="-90" />
-
-                    <TextView
-                        android:id="@+id/tvProgressPercent"
-                        android:layout_width="44dp"
-                        android:layout_height="match_parent"
-                        android:layout_gravity="center"
-                        android:fontFamily="@font/roboto_medium"
-                        android:gravity="center"
-                        android:text="0% Complete"
-                        android:textColor="@android:color/white"
-                        android:textSize="10sp"
-                        android:textStyle="bold" />
-                </FrameLayout>
-            </LinearLayout>
-
-            <!-- Stats Row -->
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:layout_width="349dp"
-                android:layout_height="98dp"
-                android:layout_marginTop="20dp"
-                android:layout_gravity="center">
-
-                <!-- Completed -->
-                <androidx.cardview.widget.CardView
-                    android:id="@+id/complete"
-                    android:layout_width="98dp"
-                    android:layout_height="91dp"
-                    app:cardBackgroundColor="#062C54"
-                    app:cardCornerRadius="12dp"
-                    app:cardElevation="0dp"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:id="@+id/completed_progress"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="15dp"
-                            android:fontFamily="@font/roboto_medium"
-                            android:gravity="center"
-                            android:text="0"
-                            android:textColor="@color/white"
-                            android:textSize="24sp" />
-
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:fontFamily="@font/roboto_medium"
-                            android:gravity="center"
-                            android:text="Completed"
-                            android:textColor="@color/white"
-                            android:textSize="17sp" />
-                    </LinearLayout>
-                </androidx.cardview.widget.CardView>
-
-                <!-- Remaining -->
-                <androidx.cardview.widget.CardView
-                    android:id="@+id/remaining"
-                    android:layout_width="98dp"
-                    android:layout_height="91dp"
-                    app:cardBackgroundColor="#062C54"
-                    app:cardCornerRadius="12dp"
-                    app:cardElevation="0dp"
-                    app:layout_constraintStart_toEndOf="@id/complete"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toStartOf="@id/total">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:id="@+id/remaining_progress"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="15dp"
-                            android:fontFamily="@font/roboto_medium"
-                            android:gravity="center"
-                            android:text="0"
-                            android:textColor="@color/white"
-                            android:textSize="24sp" />
-
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:fontFamily="@font/roboto_medium"
-                            android:gravity="center"
-                            android:text="Remaining"
-                            android:textColor="@color/white"
-                            android:textSize="17sp" />
-                    </LinearLayout>
-                </androidx.cardview.widget.CardView>
-
-                <!-- Total -->
-                <androidx.cardview.widget.CardView
-                    android:id="@+id/total"
-                    android:layout_width="98dp"
-                    android:layout_height="91dp"
-                    app:cardBackgroundColor="#062C54"
-                    app:cardCornerRadius="12dp"
-                    app:cardElevation="0dp"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constraintBottom_toBottomOf="parent">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:id="@+id/total_progress"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="15dp"
-                            android:fontFamily="@font/roboto_medium"
-                            android:gravity="center"
-                            android:text="0"
-                            android:textColor="@color/white"
-                            android:textSize="24sp" />
-
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:fontFamily="@font/roboto_medium"
-                            android:gravity="center"
-                            android:text="Total"
-                            android:textColor="@color/white"
-                            android:textSize="17sp" />
-                    </LinearLayout>
-                </androidx.cardview.widget.CardView>
-            </androidx.constraintlayout.widget.ConstraintLayout>
-        </LinearLayout>
-
-        <!-- Lessons Section -->
-        <LinearLayout
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="20dp">
+            android:paddingBottom="100dp">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Lessons"
-                android:textColor="#000"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:layout_marginBottom="10dp" />
-
-            <!-- Beginner Card -->
-            <androidx.cardview.widget.CardView
-                android:id="@+id/cardBeginner"
+            <!-- Header Section -->
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/linearLayout"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="12dp"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="3dp"
-                app:cardUseCompatPadding="true"
-                app:cardBackgroundColor="@android:color/white">
+                android:layout_height="237dp"
+                android:background="#001F3F"
+                android:orientation="vertical"
+                android:padding="20dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
 
+                <!-- User Info Row -->
                 <LinearLayout
-                    android:layout_width="match_parent"
+                    android:id="@+id/linearLayout2"
+                    android:layout_width="308dp"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical">
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintHorizontal_bias="0.761"
+                    app:layout_constraintStart_toStartOf="parent"
+                    tools:layout_editor_absoluteY="7dp">
 
-                    <!-- HEADER -->
+                    <!-- Name + Level -->
                     <LinearLayout
-                        android:id="@+id/sectionBeginnerHeader"
-                        android:layout_width="match_parent"
+                        android:layout_width="229dp"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:padding="15dp"
-                        android:gravity="center_vertical"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:background="?attr/selectableItemBackground">
+                        android:orientation="vertical">
 
                         <TextView
-                            android:paddingLeft="10dp"
-                            android:id="@+id/tvLevelName"
-                            android:layout_width="0dp"
+                            android:id="@+id/tvUserName"
+                            android:layout_width="282dp"
                             android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:fontFamily="@font/roboto_medium"
-                            android:text="Beginner"
-                            android:textColor="#E3AF64"
+                            android:paddingLeft="10dp"
+                            android:text="Juan Dela Cruz"
+                            android:textColor="@android:color/white"
                             android:textSize="20sp"
                             android:textStyle="bold" />
 
                         <TextView
-                            android:id="@+id/tvLevelProgress"
+                            android:id="@+id/tvLevel"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:fontFamily="@font/roboto_medium"
-                            android:text="0/10"
-                            android:textColor="#E3AF64"
-                            android:textSize="14sp" />
-
-                        <ImageView
-                            android:id="@+id/iconArrow"
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
-                            android:layout_marginStart="10dp"
-                            android:src="@drawable/drop_down"
-                            app:tint="#E3AF64" />
+                            android:layout_marginLeft="10dp"
+                            android:layout_marginTop="4dp"
+                            android:background="@drawable/beginner_classifier"
+                            android:paddingHorizontal="8dp"
+                            android:paddingVertical="2dp"
+                            android:textColor="#FFA726"
+                            android:textSize="12sp" />
                     </LinearLayout>
 
-                    <!-- CONTENT -->
+                    <!-- Circular Progress -->
+                    <FrameLayout
+                        android:id="@+id/progressContainer"
+                        android:layout_width="80dp"
+                        android:layout_height="80dp"
+                        android:layout_gravity="center">
+
+                        <ProgressBar
+                            android:id="@+id/progressCircle"
+                            style="?android:attr/progressBarStyleHorizontal"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:indeterminate="false"
+                            android:max="100"
+                            android:progress="0"
+                            android:progressDrawable="@drawable/full_circular_progress"
+                            android:rotation="-90" />
+
+                        <TextView
+                            android:id="@+id/tvProgressPercent"
+                            android:layout_width="44dp"
+                            android:layout_height="match_parent"
+                            android:layout_gravity="center"
+                            android:fontFamily="@font/roboto_medium"
+                            android:gravity="center"
+                            android:text="0% Complete"
+                            android:textColor="@android:color/white"
+                            android:textSize="10sp"
+                            android:textStyle="bold" />
+                    </FrameLayout>
+                </LinearLayout>
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="349dp"
+                    android:layout_height="98dp"
+                    android:layout_gravity="center"
+                    android:layout_marginTop="16dp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/linearLayout2">
+
+                    <!-- Completed -->
+                    <androidx.cardview.widget.CardView
+                        android:id="@+id/complete"
+                        android:layout_width="98dp"
+                        android:layout_height="91dp"
+                        app:cardBackgroundColor="#062C54"
+                        app:cardCornerRadius="12dp"
+                        app:cardElevation="0dp"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/completed_progress"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="15dp"
+                                android:fontFamily="@font/roboto_medium"
+                                android:gravity="center"
+                                android:text="0"
+                                android:textColor="@color/white"
+                                android:textSize="24sp" />
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="@font/roboto_medium"
+                                android:gravity="center"
+                                android:text="Completed"
+                                android:textColor="@color/white"
+                                android:textSize="17sp" />
+                        </LinearLayout>
+                    </androidx.cardview.widget.CardView>
+
+                    <!-- Remaining -->
+                    <androidx.cardview.widget.CardView
+                        android:id="@+id/remaining"
+                        android:layout_width="98dp"
+                        android:layout_height="91dp"
+                        app:cardBackgroundColor="#062C54"
+                        app:cardCornerRadius="12dp"
+                        app:cardElevation="0dp"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toStartOf="@id/total"
+                        app:layout_constraintStart_toEndOf="@id/complete"
+                        app:layout_constraintTop_toTopOf="parent">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/remaining_progress"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="15dp"
+                                android:fontFamily="@font/roboto_medium"
+                                android:gravity="center"
+                                android:text="0"
+                                android:textColor="@color/white"
+                                android:textSize="24sp" />
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="@font/roboto_medium"
+                                android:gravity="center"
+                                android:text="Remaining"
+                                android:textColor="@color/white"
+                                android:textSize="17sp" />
+                        </LinearLayout>
+                    </androidx.cardview.widget.CardView>
+
+                    <!-- Total -->
+                    <androidx.cardview.widget.CardView
+                        android:id="@+id/total"
+                        android:layout_width="98dp"
+                        android:layout_height="91dp"
+                        app:cardBackgroundColor="#062C54"
+                        app:cardCornerRadius="12dp"
+                        app:cardElevation="0dp"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="parent">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/total_progress"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="15dp"
+                                android:fontFamily="@font/roboto_medium"
+                                android:gravity="center"
+                                android:text="0"
+                                android:textColor="@color/white"
+                                android:textSize="24sp" />
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="@font/roboto_medium"
+                                android:gravity="center"
+                                android:text="Total"
+                                android:textColor="@color/white"
+                                android:textSize="17sp" />
+                        </LinearLayout>
+                    </androidx.cardview.widget.CardView>
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <ImageView
+                    android:id="@+id/lessonStructure"
+                    android:layout_width="45dp"
+                    android:layout_height="43dp"
+                    android:layout_marginTop="24dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:clickable="true"
+                    android:focusable="true"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:srcCompat="@drawable/lesson_structure" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <!-- Lessons Section -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="20dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/linearLayout"
+                app:layout_constraintVertical_bias="0.0">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="10dp"
+                    android:text="Lessons"
+                    android:textColor="#000"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <!-- Beginner Card -->
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/cardBeginner"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp"
+                    app:cardBackgroundColor="@android:color/white"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="3dp"
+                    app:cardUseCompatPadding="true">
+
                     <LinearLayout
-                        android:id="@+id/sectionBeginnerContent"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:animateLayoutChanges="true"
-                        android:orientation="vertical"
-                        android:visibility="gone">
+                        android:orientation="vertical">
 
-                        <include layout="@layout/beginner_lessons" />
+                        <!-- HEADER -->
+                        <LinearLayout
+                            android:id="@+id/sectionBeginnerHeader"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="?attr/selectableItemBackground"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:padding="15dp">
+
+                            <TextView
+                                android:id="@+id/tvLevelName"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:fontFamily="@font/roboto_medium"
+                                android:paddingLeft="10dp"
+                                android:text="Beginner"
+                                android:textColor="#E3AF64"
+                                android:textSize="20sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:id="@+id/beginnerProgress"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="@font/roboto_medium"
+                                android:text="0/10"
+                                android:textColor="#E3AF64"
+                                android:textSize="14sp" />
+
+                            <ImageView
+                                android:id="@+id/iconArrow"
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:layout_marginStart="10dp"
+                                android:src="@drawable/drop_down"
+                                app:tint="#E3AF64" />
+                        </LinearLayout>
+
+                        <!-- CONTENT -->
+                        <LinearLayout
+                            android:id="@+id/sectionBeginnerContent"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:animateLayoutChanges="true"
+                            android:orientation="vertical"
+                            android:visibility="gone">
+
+                            <include layout="@layout/beginner_lessons" />
+                        </LinearLayout>
                     </LinearLayout>
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
+                </androidx.cardview.widget.CardView>
 
 
-            <!-- Locked Intermediate -->
-            <androidx.cardview.widget.CardView
-                android:id="@+id/cardIntermediate"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="3dp"
-                app:cardUseCompatPadding="true"
-                app:cardBackgroundColor="#EDEDED">
-
-                <LinearLayout
-                    android:id="@+id/sectionIntermediateHeader"
+                <!-- Intermediate Card -->
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/cardIntermediate"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:padding="15dp"
-                    android:background="#B8B8B8"
-                    android:gravity="center_vertical">
+                    android:layout_marginBottom="12dp"
+                    android:visibility="visible"
+                    app:cardBackgroundColor="@android:color/white"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="3dp"
+                    app:cardUseCompatPadding="true">
 
-                    <ImageView
-                        android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginEnd="10dp"
-                        android:src="@drawable/lock_icon"
-                        app:tint="#353E41" />
+                        android:orientation="vertical">
 
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:fontFamily="@font/roboto_bold"
-                        android:text="Complete the previous lessons first to unlock."
-                        android:textColor="#353E41"
-                        android:textSize="14sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
+                        <!-- HEADER -->
+                        <LinearLayout
+                            android:id="@+id/sectionIntermediateHeader"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="?attr/selectableItemBackground"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:padding="15dp">
 
-            <!-- Locked Advanced -->
-            <androidx.cardview.widget.CardView
-                android:id="@+id/cardAdvanced"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="3dp"
-                app:cardUseCompatPadding="true"
-                app:cardBackgroundColor="#EDEDED"
-                android:layout_marginTop="10dp">
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:fontFamily="@font/roboto_medium"
+                                android:paddingLeft="10dp"
+                                android:text="Intermediate"
+                                android:textColor="#66ABF4"
+                                android:textSize="20sp"
+                                android:textStyle="bold" />
 
-                <LinearLayout
-                    android:id="@+id/sectionAdvancedHeader"
+                            <TextView
+                                android:id="@+id/intermediateProgress"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="@font/roboto_medium"
+                                android:text="0/10"
+                                android:textColor="#66ABF4"
+                                android:textSize="14sp" />
+
+                            <ImageView
+                                android:id="@+id/iconArrowIntermediate"
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:layout_marginStart="10dp"
+                                android:src="@drawable/drop_down"
+                                app:tint="#66ABF4" />
+                        </LinearLayout>
+
+                        <!-- CONTENT -->
+                        <LinearLayout
+                            android:id="@+id/sectionIntermediateContent"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:animateLayoutChanges="true"
+                            android:orientation="vertical"
+                            android:visibility="gone">
+
+                            <include layout="@layout/beginner_lessons" />
+                        </LinearLayout>
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/cardIntermediateLocked"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:padding="15dp"
-                    android:background="#B8B8B8"
-                    android:gravity="center_vertical">
+                    android:visibility="gone"
+                    app:cardBackgroundColor="#EDEDED"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="3dp"
+                    app:cardUseCompatPadding="true"
+                    tools:ignore="MissingConstraints">
 
-                    <ImageView
-                        android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginEnd="10dp"
-                        android:src="@drawable/lock_icon"
-                        app:tint="#353E41" />
+                        android:background="#B8B8B8"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="15dp">
 
-                    <TextView
-                        android:layout_width="0dp"
+                        <ImageView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="10dp"
+                            android:src="@drawable/lock_icon"
+                            app:tint="#353E41" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:fontFamily="@font/roboto_bold"
+                            android:text="Complete the previous lessons first to unlock."
+                            android:textColor="#353E41"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+
+                <!-- Advanced Card -->
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/cardAdvanced"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp"
+                    android:visibility="visible"
+                    app:cardBackgroundColor="@android:color/white"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="3dp"
+                    app:cardUseCompatPadding="true">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:fontFamily="@font/roboto_bold"
-                        android:text="Complete the previous lessons first to unlock."
-                        android:textColor="#353E41"
-                        android:textSize="14sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
+                        android:orientation="vertical">
 
-        </LinearLayout>
-    </LinearLayout>
-</ScrollView>
+                        <!-- HEADER -->
+                        <LinearLayout
+                            android:id="@+id/sectionAdvancedHeader"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="?attr/selectableItemBackground"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:padding="15dp">
+
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:fontFamily="@font/roboto_medium"
+                                android:paddingLeft="10dp"
+                                android:text="Advanced"
+                                android:textColor="#A666F4"
+                                android:textSize="20sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:id="@+id/advancedProgress"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="@font/roboto_medium"
+                                android:text="0/10"
+                                android:textColor="#A666F4"
+                                android:textSize="14sp" />
+
+                            <ImageView
+                                android:id="@+id/iconArrowAdvanced"
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:layout_marginStart="10dp"
+                                android:src="@drawable/drop_down"
+                                app:tint="#A666F4" />
+                        </LinearLayout>
+
+                        <!-- CONTENT -->
+                        <LinearLayout
+                            android:id="@+id/sectionAdvancedContent"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:animateLayoutChanges="true"
+                            android:orientation="vertical"
+                            android:visibility="gone">
+
+                            <include layout="@layout/beginner_lessons" />
+                        </LinearLayout>
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/cardAdvancedLocked"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:visibility="gone"
+                    app:cardBackgroundColor="#EDEDED"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="3dp"
+                    app:cardUseCompatPadding="true"
+                    tools:ignore="MissingConstraints">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="#B8B8B8"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="15dp">
+
+                        <ImageView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="10dp"
+                            android:src="@drawable/lock_icon"
+                            app:tint="#353E41" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:fontFamily="@font/roboto_bold"
+                            android:text="Complete the previous lessons first to unlock."
+                            android:textColor="#353E41"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+
+            </LinearLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </ScrollView>
+
+    <!-- Side Panel (Initially Hidden Off-Screen to the Left) -->
+    <include layout="@layout/lesson_structure_panel" />
+</FrameLayout>

@@ -70,23 +70,11 @@
             app:srcCompat="@drawable/avatar_icon" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <!-- SCROLLABLE CONTENT AREA -->
-    <ScrollView
-        android:id="@+id/scrollViewContent"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:fillViewport="true"
-        app:layout_constraintTop_toBottomOf="@id/headerLayout"
-        app:layout_constraintBottom_toTopOf="@id/bottomNavigationView"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
-
         <!-- FrameLayout that hosts fragments or dynamic content -->
         <FrameLayout
             android:id="@+id/fragment_container"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
-    </ScrollView>
+            android:layout_height="match_parent"/>
 
     <!-- BOTTOM NAVIGATION -->
     <com.google.android.material.bottomnavigation.BottomNavigationView

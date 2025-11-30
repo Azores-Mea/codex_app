@@ -14,7 +14,8 @@ public class SessionManager {
     private static final String KEY_USER_ID = "userId";
     private static final String KEY_IS_LOGGED_IN = "isLoggedIn";
     private static final String KEY_SELECTED_LESSON = "selectedLesson";
-    private static final String KEY_LESSON_DIFFICULTY = "lessonDifficulty"; // ✅ new
+    private static final String KEY_LESSON_DIFFICULTY = "lessonDifficulty";
+    private static final String KEY_LEARNING_MODE = "learningMode"; // ✅ NEW
 
     private final SharedPreferences prefs;
     private final SharedPreferences.Editor editor;
@@ -36,6 +37,20 @@ public class SessionManager {
         editor.apply();
     }
 
+    // ✅ Overloaded method to include learning mode
+    public void saveUserSession(String email, String firstName, String lastName,
+                                String classification, String userType, int userId, String learningMode) {
+        editor.putString(KEY_EMAIL, email);
+        editor.putString(KEY_FIRST_NAME, firstName);
+        editor.putString(KEY_LAST_NAME, lastName);
+        editor.putString(KEY_CLASSIFICATION, classification);
+        editor.putString(KEY_USER_TYPE, userType);
+        editor.putInt(KEY_USER_ID, userId);
+        editor.putString(KEY_LEARNING_MODE, learningMode);
+        editor.putBoolean(KEY_IS_LOGGED_IN, true);
+        editor.apply();
+    }
+
     public boolean isLoggedIn() { return prefs.getBoolean(KEY_IS_LOGGED_IN, false); }
 
     public String getEmail() { return prefs.getString(KEY_EMAIL, ""); }
@@ -47,7 +62,19 @@ public class SessionManager {
 
     public void logout() {
         editor.clear();
+        editor.putBoolean("loggedOutFlag", true); // <-- prevent auto-login
         editor.apply();
+    }
+
+
+
+    public void setLoggedOutFlag(boolean value) {
+        editor.putBoolean("loggedOutFlag", value);
+        editor.apply();
+    }
+
+    public boolean getLoggedOutFlag() {
+        return prefs.getBoolean("loggedOutFlag", false);
     }
 
     public void setClassification(String updatedClassification) {
@@ -70,13 +97,24 @@ public class SessionManager {
         editor.apply();
     }
 
-    // ✅ NEW: Save and retrieve lesson difficulty
+    // ✅ Save and retrieve lesson difficulty
     public void saveLessonDifficulty(String difficulty) {
         editor.putString(KEY_LESSON_DIFFICULTY, difficulty);
         editor.apply();
     }
 
+
     public String getLessonDifficulty() {
         return prefs.getString(KEY_LESSON_DIFFICULTY, "");
+    }
+
+    // ✅ NEW: Save and retrieve learning mode
+    public void saveLearningMode(String learningMode) {
+        editor.putString(KEY_LEARNING_MODE, learningMode);
+        editor.apply();
+    }
+
+    public String getLearningMode() {
+        return prefs.getString(KEY_LEARNING_MODE, "Guided Mode"); // Default to Guided Mode
     }
 }

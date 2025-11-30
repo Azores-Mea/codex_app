@@ -192,6 +192,17 @@ public class AdminLessonActivity extends AppCompatActivity {
         return out.toString();
     }
 
+    // Special formatter for code that preserves all whitespace and formatting
+    private String toHtmlCode(String input) {
+        if (input == null || input.isEmpty()) return "";
+
+        // Replace spaces with non-breaking spaces to preserve indentation
+        // Replace newlines with <br/> to preserve line breaks
+        String formatted = input.replace(" ", "&nbsp;").replace("\n", "<br/>");
+
+        return formatted;
+    }
+
     private void uploadData() {
         String lessonId = lessonIdInput.getText().toString().trim();
         String subSectionId = subSectionIdInput.getText().toString().trim();
@@ -224,13 +235,13 @@ public class AdminLessonActivity extends AppCompatActivity {
                 dataMap.put("description", toHtmlFormatted(descriptionInput.getText().toString()));
                 dataMap.put("helper1", toHtmlFormatted(helper1.getText().toString()));
                 dataMap.put("helper1Drawable", helper1Drawable.getText().toString());
-                dataMap.put("helper1Code", toHtmlFormatted(helper1Code.getText().toString()));
+                dataMap.put("helper1Code", toHtmlCode(helper1Code.getText().toString()));
                 dataMap.put("helper2", toHtmlFormatted(helper2.getText().toString()));
                 dataMap.put("helper2Drawable", helper2Drawable.getText().toString());
-                dataMap.put("helper2Code", toHtmlFormatted(helper2Code.getText().toString()));
+                dataMap.put("helper2Code", toHtmlCode(helper2Code.getText().toString()));
                 dataMap.put("helper3", toHtmlFormatted(helper3.getText().toString()));
                 dataMap.put("helper3Drawable", helper3Drawable.getText().toString());
-                dataMap.put("helper3Code", toHtmlFormatted(helper3Code.getText().toString()));
+                dataMap.put("helper3Code", toHtmlCode(helper3Code.getText().toString()));
                 break;
 
             case "EXAMPLE/TYPES":
@@ -238,20 +249,20 @@ public class AdminLessonActivity extends AppCompatActivity {
                 dataMap.put("exampleDescription", toHtmlFormatted(exampleDescInput.getText().toString()));
                 dataMap.put("helper4", toHtmlFormatted(helper4.getText().toString()));
                 dataMap.put("helper4Drawable", helper4Drawable.getText().toString());
-                dataMap.put("helper4Code", toHtmlFormatted(helper4Code.getText().toString()));
+                dataMap.put("helper4Code", toHtmlCode(helper4Code.getText().toString()));
                 dataMap.put("helper5", toHtmlFormatted(helper5.getText().toString()));
                 dataMap.put("helper5Drawable", helper5Drawable.getText().toString());
-                dataMap.put("helper5Code", toHtmlFormatted(helper5Code.getText().toString()));
+                dataMap.put("helper5Code", toHtmlCode(helper5Code.getText().toString()));
                 break;
 
             case "SUBTITLE/OUTPUT":
                 dataMap.put("subtitle", toHtmlFormatted(subtitleInput.getText().toString()));
                 dataMap.put("helper6", toHtmlFormatted(helper6.getText().toString()));
                 dataMap.put("helper6Drawable", helper6Drawable.getText().toString());
-                dataMap.put("helper6Code", toHtmlFormatted(helper6Code.getText().toString()));
+                dataMap.put("helper6Code", toHtmlCode(helper6Code.getText().toString()));
                 dataMap.put("helper7", toHtmlFormatted(helper7.getText().toString()));
                 dataMap.put("helper7Drawable", helper7Drawable.getText().toString());
-                dataMap.put("helper7Code", toHtmlFormatted(helper7Code.getText().toString()));
+                dataMap.put("helper7Code", toHtmlCode(helper7Code.getText().toString()));
                 break;
 
             case "TOOLTIP":

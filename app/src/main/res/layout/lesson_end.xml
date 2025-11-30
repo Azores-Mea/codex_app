@@ -76,5 +76,32 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/module_text" />
 
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/takeCodingExercises"
+        style="@style/TextStyle.Small"
+        android:layout_width="266dp"
+        android:layout_height="41dp"
+        android:layout_marginTop="12dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:text="Take Coding Exercises"
+        android:textAllCaps="false"
+        android:textColor="@color/secondary"
+        android:textSize="10sp"
+        app:backgroundTint="@color/white"
+
+        app:cornerRadius="2dp"
+        app:icon="@drawable/take_quiz"
+        app:iconGravity="textStart"
+        app:iconPadding="4dp"
+        app:iconTint="@color/secondary"
+        app:layout_constraintEnd_toEndOf="parent"
+
+        app:layout_constraintHorizontal_bias="0.504"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/takeQuiz"
+        app:strokeColor="@color/secondary"
+        app:strokeWidth="1dp" />
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

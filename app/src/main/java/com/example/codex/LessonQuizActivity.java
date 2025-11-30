@@ -24,6 +24,7 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ServerValue;
 import com.google.firebase.database.ValueEventListener;
 
 import java.text.SimpleDateFormat;
@@ -59,14 +60,14 @@ public class LessonQuizActivity extends AppCompatActivity {
 
         SessionManager sessionManager = new SessionManager(this);
         userId = sessionManager.getUserId();
-        lessonId = sessionManager.getSelectedLesson(); // 🔹 get lesson ID from session
+        lessonId = sessionManager.getSelectedLesson();
 
         Log.d("LessonQuizActivity", "UserId = " + userId + ", LessonId = " + lessonId);
 
-        quizResultsRef = FirebaseDatabase.getInstance().getReference("lessonQuizResults");
+        quizResultsRef = FirebaseDatabase.getInstance().getReference("quizResults");
 
         initViews();
-        loadLessonTitleAndQuiz(); // ✅ new combined method
+        loadLessonTitleAndQuiz();
 
         prev.setOnClickListener(v -> {
             if (currentIndex > 0) {
@@ -86,13 +87,14 @@ public class LessonQuizActivity extends AppCompatActivity {
 
         setChoiceListeners();
     }
+
     private void loadLessonTitleAndQuiz() {
         DatabaseReference lessonRef = FirebaseDatabase.getInstance()
                 .getReference("Lessons")
                 .child(lessonId)
                 .child("main_title");
 
-        TextView testTitle = findViewById(R.id.test_title); // 🔹 Reference to your title TextView
+        TextView testTitle = findViewById(R.id.test_title);
 
         lessonRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
@@ -104,8 +106,8 @@ public class LessonQuizActivity extends AppCompatActivity {
                         mainTitle = mainTitle.replaceAll("(?i)<p>", "")
                                 .replaceAll("(?i)</p>", "")
                                 .trim();
-                        quizTitle = mainTitle; // ✅ store globally for later use
-                        testTitle.setText(quizTitle + " Quiz"); // ✅ Update the UI
+                        quizTitle = mainTitle;
+                        testTitle.setText(quizTitle + " Quiz");
                     } else {
                         testTitle.setText("Lesson Quiz");
                     }
@@ -113,19 +115,17 @@ public class LessonQuizActivity extends AppCompatActivity {
                     testTitle.setText("Lesson Quiz");
                 }
 
-                // ✅ Load the quiz after the title is handled
                 loadLessonQuizData();
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
                 Log.e("LessonQuizActivity", "Failed to load lesson title: " + error.getMessage());
-                testTitle.setText("Lesson Quiz"); // fallback
+                testTitle.setText("Lesson Quiz");
                 loadLessonQuizData();
             }
         });
     }
-
 
     private void initViews() {
         progressPercent = findViewById(R.id.progressPercent);
@@ -179,7 +179,6 @@ public class LessonQuizActivity extends AppCompatActivity {
                     return;
                 }
 
-                // ✅ New path structure: quizQuestions → difficulty → lessonId
                 DatabaseReference quizRef = FirebaseDatabase.getInstance()
                         .getReference("quizQuestions")
                         .child(difficulty)
@@ -201,10 +200,7 @@ public class LessonQuizActivity extends AppCompatActivity {
                             map.put("choiceB", qSnap.child("choiceB").getValue(String.class));
                             map.put("choiceC", qSnap.child("choiceC").getValue(String.class));
                             map.put("choiceD", qSnap.child("choiceD").getValue(String.class));
-
-                            // ✅ Change from "correctAnswer" → "answer"
                             map.put("correctAnswer", qSnap.child("answer").getValue(String.class));
-
                             questionList.add(map);
                         }
 
@@ -233,14 +229,11 @@ public class LessonQuizActivity extends AppCompatActivity {
         });
     }
 
-
-
     private void loadQuestion(int index) {
         if (index < 0 || index >= questionList.size()) return;
 
         HashMap<String, String> q = questionList.get(index);
 
-        // ✅ Render HTML entities (&nbsp;, <b>, etc.) properly
         question.setText(Html.fromHtml(q.get("question"), Html.FROM_HTML_MODE_LEGACY));
         choiceAText.setText(Html.fromHtml(q.get("choiceA"), Html.FROM_HTML_MODE_LEGACY));
         choiceBText.setText(Html.fromHtml(q.get("choiceB"), Html.FROM_HTML_MODE_LEGACY));
@@ -271,8 +264,6 @@ public class LessonQuizActivity extends AppCompatActivity {
 
         next.setText(index == questionList.size() - 1 ? "Submit" : "Next");
     }
-
-
 
     private void setChoiceListeners() {
         choiceA.setOnClickListener(v -> selectAnswer("A"));
@@ -334,12 +325,6 @@ public class LessonQuizActivity extends AppCompatActivity {
         next.setTextColor(Color.BLACK);
     }
 
-    private String getClassification(int percentage) {
-        if (percentage <= 40) return "Beginner";
-        else if (percentage <= 70) return "Intermediate";
-        else return "Advanced";
-    }
-
     private void showConfirmationDialog() {
         LayoutInflater inflater = getLayoutInflater();
         View dialogView = inflater.inflate(R.layout.dialog_ready_to_join, null);
@@ -348,7 +333,11 @@ public class LessonQuizActivity extends AppCompatActivity {
         builder.setView(dialogView);
         AlertDialog dialog = builder.create();
 
-        if (!isFinishing() && !isDestroyed()) dialog.show();
+        if (!isFinishing() && !isDestroyed()) {
+            dialog.setCancelable(false);
+            dialog.setCanceledOnTouchOutside(false);
+            dialog.show();
+        }
         else return;
 
         TextView title = dialogView.findViewById(R.id.dialog_title);
@@ -377,27 +366,24 @@ public class LessonQuizActivity extends AppCompatActivity {
         int percent = (int) (((float) score / total) * 100);
         String passed = percent >= 50 ? "Passed" : "Failed";
 
-        DatabaseReference quizRef = FirebaseDatabase.getInstance()
-                .getReference("quizResults");
+        DatabaseReference userQuizRef = quizResultsRef
+                .child(String.valueOf(userId))
+                .child(lessonId);
 
-        // ✅ Create a map of user answers
         HashMap<String, Object> answersMap = new HashMap<>();
         for (int i = 0; i < userAnswers.size(); i++) {
             answersMap.put(String.valueOf(i), userAnswers.get(i));
         }
 
         HashMap<String, Object> resultData = new HashMap<>();
-        resultData.put("userId", userId);
-        resultData.put("lessonId", lessonId);
         resultData.put("answers", answersMap);
         resultData.put("score", score);
         resultData.put("total", total);
         resultData.put("passed", passed);
         resultData.put("quizType", "LessonQuiz");
-        resultData.put("timestamp", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date()));
+        resultData.put("timestamp", ServerValue.TIMESTAMP);
 
-        // ✅ Push auto-generated quiz ID
-        quizRef.push().setValue(resultData)
+        userQuizRef.setValue(resultData)
                 .addOnSuccessListener(aVoid -> {
                     saveRecentActivity(score, total);
                     showFinalDialog(score, total, passed);
@@ -406,52 +392,27 @@ public class LessonQuizActivity extends AppCompatActivity {
                         Toast.makeText(this, "Failed to submit quiz: " + e.getMessage(), Toast.LENGTH_SHORT).show());
     }
 
-
     private void saveRecentActivity(int score, int total) {
         DatabaseReference recentRef = FirebaseDatabase.getInstance()
-                .getReference("RecentAct");
+                .getReference("RecentAct")
+                .child(String.valueOf(userId))
+                .push();  // <-- AUTO ID (same as InitialTest)
 
-        DatabaseReference lessonRef = FirebaseDatabase.getInstance()
-                .getReference("Lessons")
-                .child(lessonId)
-                .child("difficulty");
+        HashMap<String, Object> record = new HashMap<>();
+        record.put("items", total);
+        record.put("score", score);
+        record.put("timeSpentFormatted", "N/A");
+        record.put("timeSpentMillis", 0);
+        record.put("timestamp", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date()));
+        record.put("title", quizTitle + " Quiz");
+        record.put("type", "LessonQuiz");
+        record.put("userId", userId);
 
-        lessonRef.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                String difficulty = "Unknown";
-                if (snapshot.exists()) {
-                    difficulty = snapshot.getValue(String.class);
-                }
-
-                int percent = (int) (((float) score / total) * 100);
-                String passed = percent >= 50 ? "Passed" : "Failed";
-
-                HashMap<String, Object> record = new HashMap<>();
-                record.put("userId", userId);
-                record.put("lessonId", lessonId);
-                record.put("lessonTitle", quizTitle); // e.g. “Java Syntax and Comments Quiz”
-                record.put("difficulty", difficulty); // ✅ from database
-                record.put("score", score);
-                record.put("totalItems", total);
-                record.put("percentage", percent);
-                record.put("passed", passed);
-                record.put("quizType", "LessonQuiz");
-                record.put("timestamp", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date()));
-
-                recentRef.push().setValue(record)
-                        .addOnSuccessListener(aVoid ->
-                                Log.d("Firebase", "Recent activity saved successfully"))
-                        .addOnFailureListener(e ->
-                                Log.e("Firebase", "Failed to save recent activity", e));
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                Log.e("Firebase", "Failed to load difficulty: " + error.getMessage());
-            }
-        });
+        recentRef.setValue(record)
+                .addOnSuccessListener(aVoid -> Log.d("LessonQuiz", "Recent activity saved."))
+                .addOnFailureListener(e -> Log.e("LessonQuiz", "Failed to save recent activity: " + e.getMessage()));
     }
+
 
 
     private int calculateScore() {
@@ -465,9 +426,8 @@ public class LessonQuizActivity extends AppCompatActivity {
     }
 
     private void showFinalDialog(int score, int total, String classification) {
-        // You can reuse your `showFinalConfirmationDialog()` here
-        Toast.makeText(this, quizTitle + " completed! Classification: " + classification, Toast.LENGTH_LONG).show();
-        startActivity(new Intent(LessonQuizActivity.this, Navigation_ActivityLearner.class));
-        finish();
+        setResult(RESULT_OK);
+        finish(); // <-- closes and returns to previous Activity or Fragment container
     }
+
 }

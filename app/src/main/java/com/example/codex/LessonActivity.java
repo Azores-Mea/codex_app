@@ -1,6 +1,8 @@
 package com.example.codex;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.res.ColorStateList;
@@ -17,10 +19,9 @@ import android.widget.TextView;
 import android.webkit.WebView;
 import com.google.firebase.database.*;
 import android.text.Html;
+import android.util.Log;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class LessonActivity extends AppCompatActivity {
@@ -28,15 +29,46 @@ public class LessonActivity extends AppCompatActivity {
     LinearLayout lessonContainer;
     DatabaseReference ref;
     SessionManager sessionManager;
-    String lessonMainTitle = ""; // ✅ store for reuse later
-    boolean isLessonDone = false; // ✅ new flag
+    String lessonMainTitle = "";
+    boolean isLessonDone = false;
+    boolean hasPassedQuiz = false;
+    boolean hasCodingExercises = false;
+    boolean hasCompletedExercises = false;
+
+    Button markDoneBtn;
+    Button takeQuizBtn;
+    Button takeCodingBtn;
+
+    // Activity result launchers
+    private ActivityResultLauncher<Intent> quizLauncher;
+    private ActivityResultLauncher<Intent> exerciseLauncher;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.lesson_view);
 
-        // 🔙 Back button setup
+        // Initialize activity result launchers
+        quizLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() == RESULT_OK) {
+                        // Reload lesson UI after quiz completion
+                        reloadLessonStatus();
+                    }
+                }
+        );
+
+        exerciseLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() == RESULT_OK) {
+                        // Reload lesson UI after exercise completion
+                        reloadLessonStatus();
+                    }
+                }
+        );
+
         ImageView backBtn = findViewById(R.id.back);
         if (backBtn != null) {
             backBtn.setOnClickListener(v -> {
@@ -48,25 +80,19 @@ public class LessonActivity extends AppCompatActivity {
         lessonContainer = findViewById(R.id.lesson_container);
         sessionManager = new SessionManager(this);
 
-        // ✅ Get selected lesson ID from SessionManager
         String lessonId = sessionManager.getSelectedLesson();
         if (lessonId == null || lessonId.isEmpty()) {
-            lessonId = "L1"; // fallback
+            lessonId = "L1";
         }
 
-        // ✅ Load header info (main_title)
         loadLessonHeader(lessonId);
-
-        // ✅ Load lesson content
         ref = FirebaseDatabase.getInstance().getReference("Lessons")
                 .child(lessonId)
                 .child("content");
 
         loadLessonContent(lessonId);
-
     }
 
-    // --- 🔹 Load Lesson Header (main_title) ---
     private void loadLessonHeader(String lessonId) {
         DatabaseReference lessonRef = FirebaseDatabase.getInstance().getReference("Lessons").child(lessonId);
 
@@ -74,24 +100,59 @@ public class LessonActivity extends AppCompatActivity {
             if (!task.isSuccessful() || task.getResult() == null) return;
 
             DataSnapshot snap = task.getResult();
-
-            // --- Get value ---
             String mainTitle = snap.child("main_title").getValue(String.class);
 
-            // --- Clean up HTML tags ---
             if (mainTitle != null) {
                 mainTitle = mainTitle.replaceAll("(?i)<p>", "")
                         .replaceAll("(?i)</p>", "")
                         .trim();
-                lessonMainTitle = mainTitle; // ✅ store globally for later use
+                lessonMainTitle = mainTitle;
             }
 
-            // --- Apply to UI ---
             TextView headerTitle = findViewById(R.id.main_title);
             if (headerTitle != null && mainTitle != null && !mainTitle.isEmpty()) {
                 headerTitle.setText(mainTitle);
             }
         });
+    }
+
+    private void reloadLessonStatus() {
+        String userId = String.valueOf(sessionManager.getUserId());
+        String lessonId = sessionManager.getSelectedLesson();
+
+        DatabaseReference quizResultsRef = FirebaseDatabase.getInstance().getReference("quizResults");
+        DatabaseReference exerciseResultsRef = FirebaseDatabase.getInstance().getReference("exerciseResults");
+        DatabaseReference recentRef = FirebaseDatabase.getInstance().getReference("RecentLesson");
+
+        // Check quiz pass status
+        quizResultsRef.child(userId).child(lessonId)
+                .get()
+                .addOnSuccessListener(snapshot -> {
+                    if (snapshot.exists()) {
+                        String passed = snapshot.child("passed").getValue(String.class);
+                        hasPassedQuiz = "Passed".equalsIgnoreCase(passed);
+                    }
+                    updateLessonUI(markDoneBtn, takeQuizBtn, takeCodingBtn);
+                });
+
+        // Check exercise completion status
+        exerciseResultsRef.child(userId).child(lessonId)
+                .get()
+                .addOnSuccessListener(snapshot -> {
+                    if (snapshot.exists()) {
+                        Boolean completed = snapshot.child("completed").getValue(Boolean.class);
+                        hasCompletedExercises = completed != null && completed;
+                    }
+                    updateLessonUI(markDoneBtn, takeQuizBtn, takeCodingBtn);
+                });
+
+        // Check lesson done status
+        recentRef.child(userId).child(lessonId)
+                .get()
+                .addOnSuccessListener(snapshot -> {
+                    isLessonDone = snapshot.exists();
+                    updateLessonUI(markDoneBtn, takeQuizBtn, takeCodingBtn);
+                });
     }
 
     private void loadLessonContent(String lessonId) {
@@ -103,7 +164,6 @@ public class LessonActivity extends AppCompatActivity {
                 // --- TITLE BLOCK ---
                 if (snap.child("TITLE").exists()) {
                     DataSnapshot t = snap.child("TITLE");
-
                     View view = getLayoutInflater().inflate(R.layout.lesson_title, lessonContainer, false);
 
                     setHtmlText(view.findViewById(R.id.title), t.child("title").getValue(String.class));
@@ -178,7 +238,6 @@ public class LessonActivity extends AppCompatActivity {
                 }
             }
 
-            // ✅ Add lesson_end.xml at the end
             View endView = getLayoutInflater().inflate(R.layout.lesson_end, lessonContainer, false);
             String moduleNumber = lessonId.replaceAll("[^0-9]", "");
             TextView moduleText = endView.findViewById(R.id.module_text);
@@ -188,32 +247,84 @@ public class LessonActivity extends AppCompatActivity {
                 moduleText.setText("End of Module " + moduleNumber);
             }
 
-            Button markDoneBtn = endView.findViewById(R.id.markDone);
-            Button takeQuizBtn = endView.findViewById(R.id.takeQuiz);
+            markDoneBtn = endView.findViewById(R.id.markDone);
+            takeQuizBtn = endView.findViewById(R.id.takeQuiz);
+            takeCodingBtn = endView.findViewById(R.id.takeCodingExercises);
+
             takeQuizBtn.setEnabled(false);
             takeQuizBtn.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#E0E0E0")));
             takeQuizBtn.setTextColor(Color.BLACK);
 
+            takeCodingBtn.setEnabled(false);
+            takeCodingBtn.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#E0E0E0")));
+            takeCodingBtn.setTextColor(Color.BLACK);
+
             String userId = String.valueOf(sessionManager.getUserId());
             DatabaseReference recentRef = FirebaseDatabase.getInstance().getReference("RecentLesson");
+            DatabaseReference quizResultsRef = FirebaseDatabase.getInstance().getReference("quizResults");
+            DatabaseReference codingExercisesRef = FirebaseDatabase.getInstance().getReference("coding_exercises");
+            DatabaseReference exerciseResultsRef = FirebaseDatabase.getInstance().getReference("exerciseResults");
 
-            // ✅ Improved query: fetch all user's lessons and check by lessonId
-            recentRef.orderByChild("userId").equalTo(userId)
+            // Check if coding exercises exist for this lesson
+            codingExercisesRef.child(lessonId).addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot snapshot) {
+                    hasCodingExercises = snapshot.exists() && snapshot.hasChildren();
+
+                    if (!hasCodingExercises) {
+                        takeCodingBtn.setVisibility(View.GONE);
+                    } else {
+                        takeCodingBtn.setVisibility(View.VISIBLE);
+                    }
+
+                    updateLessonUI(markDoneBtn, takeQuizBtn, takeCodingBtn);
+                }
+
+                @Override
+                public void onCancelled(DatabaseError error) {
+                    takeCodingBtn.setVisibility(View.GONE);
+                }
+            });
+
+            // Check quiz pass status
+            quizResultsRef.child(userId).child(lessonId)
                     .addListenerForSingleValueEvent(new ValueEventListener() {
                         @Override
                         public void onDataChange(DataSnapshot snapshot) {
-                            boolean found = false;
                             if (snapshot.exists()) {
-                                for (DataSnapshot s : snapshot.getChildren()) {
-                                    String lId = s.child("lessonId").getValue(String.class);
-                                    if (lessonId.equals(lId)) {
-                                        found = true;
-                                        break;
-                                    }
-                                }
+                                String passed = snapshot.child("passed").getValue(String.class);
+                                hasPassedQuiz = "Passed".equalsIgnoreCase(passed);
                             }
-                            isLessonDone = found; // ✅ store flag
-                            updateLessonUI(markDoneBtn, takeQuizBtn);
+                            updateLessonUI(markDoneBtn, takeQuizBtn, takeCodingBtn);
+                        }
+
+                        @Override
+                        public void onCancelled(DatabaseError error) { }
+                    });
+
+            // Check exercise completion status
+            exerciseResultsRef.child(userId).child(lessonId)
+                    .addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(DataSnapshot snapshot) {
+                            if (snapshot.exists()) {
+                                Boolean completed = snapshot.child("completed").getValue(Boolean.class);
+                                hasCompletedExercises = completed != null && completed;
+                            }
+                            updateLessonUI(markDoneBtn, takeQuizBtn, takeCodingBtn);
+                        }
+
+                        @Override
+                        public void onCancelled(DatabaseError error) { }
+                    });
+
+            // Check lesson done status
+            recentRef.child(userId).child(lessonId)
+                    .addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(DataSnapshot snapshot) {
+                            isLessonDone = snapshot.exists();
+                            updateLessonUI(markDoneBtn, takeQuizBtn, takeCodingBtn);
                         }
 
                         @Override
@@ -221,14 +332,19 @@ public class LessonActivity extends AppCompatActivity {
                     });
 
             takeQuizBtn.setOnClickListener(v -> {
+                // Disable click if already passed
+                if (hasPassedQuiz) {
+                    return;
+                }
+
                 sessionManager.saveSelectedLesson(lessonId);
                 Intent intent = new Intent(LessonActivity.this, LessonQuizActivity.class);
-                startActivity(intent);
+                quizLauncher.launch(intent);
                 overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
             });
 
             markDoneBtn.setOnClickListener(v -> {
-                if (isLessonDone) return; // prevent duplicates
+                if (isLessonDone) return;
 
                 markDoneBtn.setText("✓ Completed");
                 markDoneBtn.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
@@ -238,21 +354,38 @@ public class LessonActivity extends AppCompatActivity {
                 takeQuizBtn.setTextColor(Color.WHITE);
 
                 Map<String, Object> lessonData = new HashMap<>();
-                lessonData.put("userId", userId);
-                lessonData.put("lessonId", lessonId);
                 lessonData.put("title", lessonMainTitle);
                 lessonData.put("timestamp", ServerValue.TIMESTAMP);
 
-                recentRef.push().setValue(lessonData).addOnSuccessListener(aVoid -> {
-                    isLessonDone = true;
-                    updateLessonUI(markDoneBtn, takeQuizBtn);
-                });
+                recentRef.child(userId).child(lessonId)
+                        .setValue(lessonData)
+                        .addOnSuccessListener(aVoid -> {
+                            isLessonDone = true;
+                            updateLessonUI(markDoneBtn, takeQuizBtn, takeCodingBtn);
+                        });
+            });
+
+            takeCodingBtn.setOnClickListener(v -> {
+                // Disable click if not passed quiz or already completed
+                if (!hasPassedQuiz || hasCompletedExercises) {
+                    return;
+                }
+
+                sessionManager.saveSelectedLesson(lessonId);
+                Intent intent = new Intent(LessonActivity.this, ExerciseActivity.class);
+                intent.putExtra("lessonId", lessonId);
+                exerciseLauncher.launch(intent);
+                overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
             });
 
             lessonContainer.addView(endView);
         });
     }
-    private void updateLessonUI(Button markDoneBtn, Button takeQuizBtn) {
+
+    private void updateLessonUI(Button markDoneBtn, Button takeQuizBtn, Button takeCodingBtn) {
+        if (markDoneBtn == null || takeQuizBtn == null || takeCodingBtn == null) return;
+
+        // Handle Mark as Done button
         if (isLessonDone) {
             markDoneBtn.setText("✓ Completed");
             markDoneBtn.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
@@ -268,10 +401,69 @@ public class LessonActivity extends AppCompatActivity {
             takeQuizBtn.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#E0E0E0")));
             takeQuizBtn.setTextColor(Color.BLACK);
         }
+
+        // Handle Take Quiz button
+        if (hasPassedQuiz) {
+            // Quiz passed - disable retake
+            takeQuizBtn.setText("Passed");
+            takeQuizBtn.setEnabled(false);
+            takeQuizBtn.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
+            takeQuizBtn.setTextColor(Color.WHITE);
+        } else if (isLessonDone) {
+            DatabaseReference quizResultsRef = FirebaseDatabase.getInstance().getReference("quizResults");
+            String userId = String.valueOf(sessionManager.getUserId());
+            String lessonId = sessionManager.getSelectedLesson();
+
+            quizResultsRef.child(userId).child(lessonId)
+                    .addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(DataSnapshot snapshot) {
+                            if (snapshot.exists()) {
+                                takeQuizBtn.setText("Retake");
+                            } else {
+                                takeQuizBtn.setText("Take Quiz");
+                            }
+                            takeQuizBtn.setEnabled(true);
+                            takeQuizBtn.setBackgroundTintList(ColorStateList.valueOf(Color.BLACK));
+                            takeQuizBtn.setTextColor(Color.WHITE);
+                        }
+
+                        @Override
+                        public void onCancelled(DatabaseError error) {
+                            takeQuizBtn.setText("Take Quiz");
+                            takeQuizBtn.setEnabled(true);
+                            takeQuizBtn.setBackgroundTintList(ColorStateList.valueOf(Color.BLACK));
+                            takeQuizBtn.setTextColor(Color.WHITE);
+                        }
+                    });
+        }
+
+        // Handle Coding Exercise button
+        if (hasCodingExercises) {
+            if (hasCompletedExercises) {
+                // Show as completed - disable clicking
+                takeCodingBtn.setText("✓ Completed");
+                takeCodingBtn.setEnabled(false);
+                takeCodingBtn.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
+                takeCodingBtn.setTextColor(Color.WHITE);
+            } else if (hasPassedQuiz) {
+                // Enable to take exercises
+                takeCodingBtn.setText("Take Coding Exercises");
+                takeCodingBtn.setEnabled(true);
+                takeCodingBtn.setBackgroundTintList(ColorStateList.valueOf(Color.BLACK));
+                takeCodingBtn.setTextColor(Color.WHITE);
+            } else {
+                // Quiz not passed yet - keep disabled
+                takeCodingBtn.setText("Take Coding Exercises");
+                takeCodingBtn.setEnabled(false);
+                takeCodingBtn.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#E0E0E0")));
+                takeCodingBtn.setTextColor(Color.BLACK);
+            }
+        } else {
+            takeCodingBtn.setVisibility(View.GONE);
+        }
     }
 
-
-    // --- Tooltip popup handler ---
     private void showTooltip(View anchorView, String tooltipHtml) {
         if (tooltipHtml == null || tooltipHtml.trim().isEmpty()) return;
 
@@ -318,7 +510,6 @@ public class LessonActivity extends AppCompatActivity {
         popupView.postDelayed(popupWindow::dismiss, 3000);
     }
 
-    // --- HTML text formatting ---
     private void setHtmlText(TextView view, String value) {
         if (value == null) {
             view.setVisibility(View.GONE);
@@ -413,7 +604,6 @@ public class LessonActivity extends AppCompatActivity {
         view.setIncludeFontPadding(false);
     }
 
-    // --- ✅ Code Block Loader (HTML safe) ---
     @SuppressLint("SetJavaScriptEnabled")
     private void setCodeHtml(WebView webView, String content) {
         if (content == null || content.trim().isEmpty()) {
@@ -429,6 +619,7 @@ public class LessonActivity extends AppCompatActivity {
                 .replaceAll("(?i)</p>", "\n")
                 .replaceAll("(?i)<p>", "")
                 .replaceAll("&nbsp;", " ")
+                .replaceAll("&quot;", "\"")
                 .replaceAll("\t", "    ")
                 .trim();
 
@@ -482,8 +673,6 @@ public class LessonActivity extends AppCompatActivity {
         webView.setVisibility(View.VISIBLE);
         webView.loadDataWithBaseURL(null, html, "text/html", "UTF-8", null);
     }
-
-    // --- Drawable loader ---
     private void loadImage(ImageView view, String drawableName) {
         if (drawableName == null || drawableName.trim().isEmpty()) {
             view.setVisibility(View.GONE);

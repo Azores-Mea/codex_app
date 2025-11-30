@@ -41,7 +41,7 @@ public class LoginHandler {
     private final Handler handler = new Handler();
     private Runnable emailValidationRunnable, passwordCheckRunnable;
 
-    private final int COLOR_DEFAULT = Color.parseColor("#594AE2");
+    private final int COLOR_DEFAULT = Color.parseColor("#03162A");
     private final int COLOR_VALID = Color.parseColor("#06651A");
     private final int COLOR_INVALID = Color.parseColor("#F44336");
 
@@ -260,6 +260,7 @@ public class LoginHandler {
                                     SessionManager sessionManager = new SessionManager(activity);
                                     sessionManager.saveUserSession(email, firstName, lastName, classification, userType, userId);
 
+                                    sessionManager.setLoggedOutFlag(false);
                                     showLoginSuccessDialog(userType, firstName);
                                 }
                             }
@@ -282,6 +283,7 @@ public class LoginHandler {
 
         MaterialButton btnYes = dialogView.findViewById(R.id.yes_btn);
 
+
         AlertDialog.Builder builder = new AlertDialog.Builder(activity);
         builder.setView(dialogView);
         AlertDialog dialog = builder.create();
@@ -293,6 +295,8 @@ public class LoginHandler {
                 LinearLayout.LayoutParams.WRAP_CONTENT
         );
         dialog.getWindow().setDimAmount(0.6f);
+        dialog.setCancelable(false);
+        dialog.setCanceledOnTouchOutside(false);
 
         TextView title = dialogView.findViewById(R.id.dialog_title);
         GradientTextUtil.applyGradient(title, "#03162A", "#0A4B90");

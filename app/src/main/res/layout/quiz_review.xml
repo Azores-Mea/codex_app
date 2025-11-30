@@ -1,0 +1,318 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="420dp"
+        android:layout_height="wrap_content"
+        android:background="@color/bgText"
+        android:orientation="vertical"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:ignore="MissingConstraints">
+
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="649dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <androidx.cardview.widget.CardView
+                    android:layout_width="130dp"
+                    android:layout_height="41dp"
+                    android:layout_marginLeft="30dp"
+                    android:layout_marginTop="40dp"
+                    app:cardCornerRadius="5dp">
+
+
+                    <TextView
+                        android:id="@+id/questionNumber"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="#F5F5F5"
+                        android:fontFamily="@font/roboto_medium"
+                        android:gravity="center"
+                        android:text="Question 1 of 20"
+                        android:textColor="@color/primary"
+                        android:textSize="14sp" />
+                </androidx.cardview.widget.CardView>
+
+
+                <LinearLayout
+                    android:layout_width="331dp"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_marginTop="50sp"
+                    android:layout_marginRight="10dp"
+                    android:layout_marginBottom="20dp"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/qNum"
+                        android:layout_width="63dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:fontFamily="@font/roboto_bold"
+                        android:gravity="center"
+                        android:text="1."
+                        android:textColor="@color/primary"
+                        android:textSize="24sp" />
+
+                    <TextView
+                        android:id="@+id/question"
+                        android:layout_width="282dp"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/roboto_bold"
+                        android:text="What is the correct way to print text in Java?"
+                        android:textColor="@color/primary"
+                        android:textSize="24sp" />
+                </LinearLayout>
+
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/choiceA"
+                    android:layout_width="339dp"
+                    android:layout_height="49dp"
+                    android:layout_gravity="center"
+                    android:layout_marginLeft="10dp"
+                    android:layout_marginTop="30dp"
+                    app:cardCornerRadius="5dp"
+                    app:strokeColor="@color/secondary">
+
+                    <LinearLayout
+                        android:id="@+id/choiceABg"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="@color/bgText"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/choiceALetter"
+                            android:layout_width="30dp"
+                            android:layout_height="30dp"
+                            android:layout_gravity="center_vertical"
+                            android:layout_marginLeft="10dp"
+                            android:background="@drawable/choice_circle_background"
+                            android:fontFamily="@font/roboto_medium"
+                            android:gravity="center"
+                            android:text="A"
+                            android:textColor="@color/secondary"
+                            android:textSize="14sp" />
+
+                        <TextView
+                            android:id="@+id/choiceAText"
+                            android:layout_width="245dp"
+                            android:layout_height="37dp"
+                            android:layout_gravity="center_vertical"
+                            android:layout_marginLeft="10dp"
+                            android:layout_weight="1"
+                            android:fontFamily="@font/roboto_medium"
+                            android:gravity="center_vertical"
+                            android:text="TextView"
+                            android:textColor="@color/secondary"
+                            android:textSize="14sp" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/choiceB"
+                    android:layout_width="339dp"
+                    android:layout_height="49dp"
+                    android:layout_gravity="center"
+                    android:layout_marginLeft="10dp"
+                    android:layout_marginTop="30dp"
+                    app:cardCornerRadius="5dp"
+                    app:strokeColor="@color/secondary">
+
+                    <LinearLayout
+                        android:id="@+id/choiceBBg"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="@color/bgText"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/choiceBLetter"
+                            android:layout_width="30dp"
+                            android:layout_height="30dp"
+                            android:layout_gravity="center_vertical"
+                            android:layout_marginLeft="10dp"
+                            android:background="@drawable/choice_circle_background"
+                            android:fontFamily="@font/roboto_medium"
+                            android:gravity="center"
+                            android:text="B"
+                            android:textColor="@color/secondary"
+                            android:textSize="14sp" />
+
+                        <TextView
+                            android:id="@+id/choiceBText"
+                            android:layout_width="245dp"
+                            android:layout_height="37dp"
+                            android:layout_gravity="center_vertical"
+                            android:layout_marginLeft="10dp"
+                            android:layout_weight="1"
+                            android:fontFamily="@font/roboto_medium"
+                            android:gravity="center_vertical"
+                            android:text="TextView"
+                            android:textColor="@color/secondary"
+                            android:textSize="14sp" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/choiceC"
+                    android:layout_width="339dp"
+                    android:layout_height="49dp"
+                    android:layout_gravity="center"
+                    android:layout_marginLeft="10dp"
+                    android:layout_marginTop="30dp"
+                    app:cardCornerRadius="5dp"
+                    app:strokeColor="@color/secondary">
+
+                    <LinearLayout
+                        android:id="@+id/choiceCBg"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="@color/bgText"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/choiceCLetter"
+                            android:layout_width="30dp"
+                            android:layout_height="30dp"
+                            android:layout_gravity="center_vertical"
+                            android:layout_marginLeft="10dp"
+                            android:background="@drawable/choice_circle_background"
+                            android:fontFamily="@font/roboto_medium"
+                            android:gravity="center"
+                            android:text="C"
+                            android:textColor="@color/secondary"
+                            android:textSize="14sp" />
+
+                        <TextView
+                            android:id="@+id/choiceCText"
+                            android:layout_width="245dp"
+                            android:layout_height="37dp"
+                            android:layout_gravity="center_vertical"
+                            android:layout_marginLeft="10dp"
+                            android:layout_weight="1"
+                            android:fontFamily="@font/roboto_medium"
+                            android:gravity="center_vertical"
+                            android:text="TextView"
+                            android:textColor="@color/secondary"
+                            android:textSize="14sp" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/choiceD"
+                    android:layout_width="339dp"
+                    android:layout_height="49dp"
+                    android:layout_gravity="center"
+                    android:layout_marginLeft="10dp"
+                    android:layout_marginTop="30dp"
+                    app:cardCornerRadius="5dp"
+                    app:strokeColor="@color/secondary">
+
+                    <LinearLayout
+                        android:id="@+id/choiceDBg"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="@color/bgText"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/choiceDLetter"
+                            android:layout_width="30dp"
+                            android:layout_height="30dp"
+                            android:layout_gravity="center_vertical"
+                            android:layout_marginLeft="10dp"
+                            android:background="@drawable/choice_circle_background"
+                            android:fontFamily="@font/roboto_medium"
+                            android:gravity="center"
+                            android:text="D"
+                            android:textColor="@color/secondary"
+                            android:textSize="14sp" />
+
+                        <TextView
+                            android:id="@+id/choiceDText"
+                            android:layout_width="245dp"
+                            android:layout_height="37dp"
+                            android:layout_gravity="center_vertical"
+                            android:layout_marginLeft="10dp"
+                            android:layout_weight="1"
+                            android:fontFamily="@font/roboto_medium"
+                            android:gravity="center_vertical"
+                            android:text="TextView"
+                            android:textColor="@color/secondary"
+                            android:textSize="14sp" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <LinearLayout
+                    android:layout_width="370dp"
+                    android:layout_height="100dp"
+                    android:layout_gravity="center"
+                    android:layout_marginTop="20dp"
+                    android:orientation="horizontal">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/prev"
+                        android:layout_width="167dp"
+                        android:layout_height="58dp"
+                        android:layout_gravity="center"
+                        android:alpha="0.5"
+                        android:elevation="8dp"
+                        android:enabled="false"
+                        android:fontFamily="@font/roboto_bold"
+                        android:text="Previous"
+                        android:textAllCaps="false"
+                        android:textColor="@color/black"
+
+                        android:textSize="14sp"
+                        android:translationZ="8dp"
+                        app:backgroundTint="#E0E0E0"
+                        app:cornerRadius="12dp"
+                        app:elevation="8dp"
+                        tools:ignore="HardcodedText,RtlHardcoded,RtlSymmetry" />
+
+                    <View
+                        android:id="@+id/view5"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/next"
+                        android:layout_width="167dp"
+                        android:layout_height="58dp"
+                        android:layout_gravity="center"
+                        android:alpha="0.5"
+                        android:elevation="8dp"
+                        android:enabled="false"
+                        android:fontFamily="@font/roboto_bold"
+                        android:text="Next"
+                        android:textAllCaps="false"
+                        android:textColor="@color/black"
+
+                        android:textSize="14sp"
+                        android:translationZ="8dp"
+                        app:backgroundTint="#E0E0E0"
+                        app:cornerRadius="12dp"
+                        app:elevation="8dp"
+                        tools:ignore="HardcodedText,RtlHardcoded,RtlSymmetry" />
+                </LinearLayout>
+            </LinearLayout>
+        </ScrollView>
+
+
+    </LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

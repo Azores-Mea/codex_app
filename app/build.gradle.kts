@@ -33,7 +33,8 @@ android {
 }
 
 dependencies {
-
+    implementation("com.google.android.gms:play-services-auth:17.0.0")
+    implementation("com.google.firebase:firebase-auth:22.3.0")
     implementation("com.github.amrdeveloper:codeview:1.3.3")
     implementation(libs.appcompat)
     implementation(libs.material)
@@ -46,4 +47,10 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
+    implementation("com.google.firebase:firebase-database:20.3.1")
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.11.0")
 }

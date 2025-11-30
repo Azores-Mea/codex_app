@@ -8,6 +8,8 @@
     <color name="dodger_blue_light">#4398F2</color>
     <color name="gray">#E0E0E0</color>
     <color name="deEmphasized">#353E41</color>
+    <color name="green">#06651A</color>
+
 
     <color name="bgText">#FEFCFF</color>
 </resources>

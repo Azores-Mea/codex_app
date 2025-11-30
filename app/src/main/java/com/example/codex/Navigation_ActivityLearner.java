@@ -27,6 +27,7 @@ import com.google.firebase.database.ValueEventListener;
 
 import homepage_learner.HomeFragment;
 import homepage_learner.LearnFragment;
+import homepage_learner.ReviewFragment;
 
 public class Navigation_ActivityLearner extends AppCompatActivity {
 
@@ -133,7 +134,6 @@ public class Navigation_ActivityLearner extends AppCompatActivity {
                         showInitialTest();
                     } else if ("intermediate".equalsIgnoreCase(classification) ||
                             "advanced".equalsIgnoreCase(classification)) {
-                        showChooseModeDialog(classification);
                     }
                 });
 
@@ -201,6 +201,8 @@ public class Navigation_ActivityLearner extends AppCompatActivity {
         AlertDialog dialog = builder.create();
 
         if (!isFinishing() && !isDestroyed()) {
+            dialog.setCancelable(false);
+            dialog.setCanceledOnTouchOutside(false);
             dialog.show();
             if (dialog.getWindow() != null) {
                 dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
@@ -242,70 +244,70 @@ public class Navigation_ActivityLearner extends AppCompatActivity {
         });
     }
 
-    private void showChooseModeDialog(String classification) {
-        // Fetch the user's learningMode from Firebase
-        userRef.child("learningMode").get().addOnCompleteListener(task -> {
-            if (task.isSuccessful()) {
-                String learningMode = task.getResult().getValue(String.class);
-
-                // Check if learningMode is "none", only then show the dialog
-                if (learningMode != null && "none".equalsIgnoreCase(learningMode)) {
-                    // Proceed to show the dialog if learningMode is "none"
-                    LayoutInflater inflater = getLayoutInflater();
-                    View dialogView = inflater.inflate(R.layout.dialog_ready_to_join, null);
-
-                    AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                    builder.setView(dialogView);
-
-                    AlertDialog dialog = builder.create();
-
-                    if (!isFinishing() && !isDestroyed()) {
-                        dialog.show();
-                        if (dialog.getWindow() != null) {
-                            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
-                            dialog.getWindow().setLayout(
-                                    LinearLayout.LayoutParams.WRAP_CONTENT,
-                                    LinearLayout.LayoutParams.WRAP_CONTENT
-                            );
-                            dialog.getWindow().setDimAmount(0.6f);
-                        }
-                    } else {
-                        Log.w("NavigationLearner", "Activity finishing/destroyed - cannot show choose mode dialog");
-                        return;
-                    }
-
-                    String firstName = userName.getText().toString();
-                    TextView title = dialogView.findViewById(R.id.dialog_title);
-                    title.setText("Hello, " + firstName + "!");
-                    GradientTextUtil.applyGradient(title, "#03162A", "#0A4B90");
-
-                    TextView message = dialogView.findViewById(R.id.dialog_message);
-                    message.setText(Html.fromHtml("You can now select your learning mode.", Html.FROM_HTML_MODE_LEGACY));
-
-                    MaterialButton btnCancel = dialogView.findViewById(R.id.no_btn);
-                    MaterialButton btnSelect = dialogView.findViewById(R.id.yes_btn);
-
-                    int redColor = Color.parseColor("#E31414");
-                    btnCancel.setTextColor(redColor);
-                    btnCancel.setStrokeColor(android.content.res.ColorStateList.valueOf(redColor));
-
-                    btnCancel.setText("Cancel");
-                    btnSelect.setText("Select Mode");
-
-                    btnCancel.setOnClickListener(v -> dialog.dismiss());
-                    btnSelect.setOnClickListener(v -> {
-                        dialog.dismiss();
-                        Intent intent = new Intent(this, SelectionMode.class);
-                        startActivity(intent);
-                        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
-                    });
-                } else {
-                    // If learningMode is not "none", skip showing the dialog
-                    Log.d("NavigationLearner", "User already has a learning mode set, skipping Choose Mode dialog.");
-                }
-            } else {
-                Log.e("NavigationLearner", "Failed to retrieve learningMode: " + task.getException());
-            }
-        });
-    }
+//    private void showChooseModeDialog(String classification) {
+//        // Fetch the user's learningMode from Firebase
+//        userRef.child("learningMode").get().addOnCompleteListener(task -> {
+//            if (task.isSuccessful()) {
+//                String learningMode = task.getResult().getValue(String.class);
+//
+//                // Check if learningMode is "none", only then show the dialog
+//                if (learningMode != null && "none".equalsIgnoreCase(learningMode)) {
+//                    // Proceed to show the dialog if learningMode is "none"
+//                    LayoutInflater inflater = getLayoutInflater();
+//                    View dialogView = inflater.inflate(R.layout.dialog_ready_to_join, null);
+//
+//                    AlertDialog.Builder builder = new AlertDialog.Builder(this);
+//                    builder.setView(dialogView);
+//
+//                    AlertDialog dialog = builder.create();
+//
+//                    if (!isFinishing() && !isDestroyed()) {
+//                        dialog.show();
+//                        if (dialog.getWindow() != null) {
+//                            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+//                            dialog.getWindow().setLayout(
+//                                    LinearLayout.LayoutParams.WRAP_CONTENT,
+//                                    LinearLayout.LayoutParams.WRAP_CONTENT
+//                            );
+//                            dialog.getWindow().setDimAmount(0.6f);
+//                        }
+//                    } else {
+//                        Log.w("NavigationLearner", "Activity finishing/destroyed - cannot show choose mode dialog");
+//                        return;
+//                    }
+//
+//                    String firstName = userName.getText().toString();
+//                    TextView title = dialogView.findViewById(R.id.dialog_title);
+//                    title.setText("Hello, " + firstName + "!");
+//                    GradientTextUtil.applyGradient(title, "#03162A", "#0A4B90");
+//
+//                    TextView message = dialogView.findViewById(R.id.dialog_message);
+//                    message.setText(Html.fromHtml("You can now select your learning mode.", Html.FROM_HTML_MODE_LEGACY));
+//
+//                    MaterialButton btnCancel = dialogView.findViewById(R.id.no_btn);
+//                    MaterialButton btnSelect = dialogView.findViewById(R.id.yes_btn);
+//
+//                    int redColor = Color.parseColor("#E31414");
+//                    btnCancel.setTextColor(redColor);
+//                    btnCancel.setStrokeColor(android.content.res.ColorStateList.valueOf(redColor));
+//
+//                    btnCancel.setText("Cancel");
+//                    btnSelect.setText("Select Mode");
+//
+//                    btnCancel.setOnClickListener(v -> dialog.dismiss());
+//                    btnSelect.setOnClickListener(v -> {
+//                        dialog.dismiss();
+//                        Intent intent = new Intent(this, SelectionMode.class);
+//                        startActivity(intent);
+//                        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+//                    });
+//                } else {
+//                    // If learningMode is not "none", skip showing the dialog
+//                    Log.d("NavigationLearner", "User already has a learning mode set, skipping Choose Mode dialog.");
+//                }
+//            } else {
+//                Log.e("NavigationLearner", "Failed to retrieve learningMode: " + task.getException());
+//            }
+//        });
+//    }
 }
