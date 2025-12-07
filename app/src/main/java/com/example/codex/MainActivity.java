@@ -6,11 +6,14 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
 
-import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
+import android.annotation.SuppressLint;
+import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.Html;
+import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.Animation;
@@ -18,6 +21,7 @@ import android.view.animation.AnimationUtils;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -28,7 +32,18 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.util.Objects;
+import android.graphics.Color;
+import android.text.SpannableString;
+import android.text.Spanned;
+import android.text.TextPaint;
+import android.text.method.LinkMovementMethod;
+import android.text.style.ClickableSpan;
+import android.view.animation.AnimationUtils;
+
 public class MainActivity extends AppCompatActivity {
+
+    private static final String TAG = "MainActivity";
 
     ConstraintLayout formContainer;
     ImageView imageView;
@@ -42,12 +57,11 @@ public class MainActivity extends AppCompatActivity {
     private CompleteProfileHandler completeProfileHandler;
 
     private ActivityResultLauncher<Intent> googleSignInLauncher;
+    private boolean toastShown = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        DebugHelper.checkSetup(this);
 
         // Check if user is already logged in
         SessionManager sessionManager = new SessionManager(this);
@@ -71,6 +85,8 @@ public class MainActivity extends AppCompatActivity {
 
         databaseReference = FirebaseDatabase.getInstance().getReference("Users");
 
+        TextView policyText = findViewById(R.id.policyText);
+        setupPolicyLinks(policyText);
         TextView title = findViewById(R.id.wc);
         GradientTextUtil.applyGradient(title, "#03162A", "#0A4B90");
 
@@ -79,6 +95,9 @@ public class MainActivity extends AppCompatActivity {
         loginHandler = new LoginHandler(this);
         googleSignInHandler = new GoogleSignInHandler(this);
         completeProfileHandler = new CompleteProfileHandler(this);
+
+        // Connect the handlers so CompleteProfileHandler can control RegistrationHandler
+        completeProfileHandler.setRegistrationHandler(registrationHandler);
 
         // Setup Google Sign-In launcher
         setupGoogleSignInLauncher();
@@ -109,6 +128,7 @@ public class MainActivity extends AppCompatActivity {
         // Open registration form
         createAccountBtn.setOnClickListener(v -> {
             hideKeyboardAndClearFocus();
+            completeProfileHandler.hideCompleteInfoForm();
             loginHandler.hideLoginForm();
             registrationHandler.showRegistrationForm();
         });
@@ -116,23 +136,147 @@ public class MainActivity extends AppCompatActivity {
         // Open login form
         signInBtn.setOnClickListener(v -> {
             hideKeyboardAndClearFocus();
+            completeProfileHandler.hideCompleteInfoForm();
             registrationHandler.hideRegistrationForm();
             loginHandler.showLoginForm();
         });
 
         // Google Sign-In for Registration
         gmailAccountReg.setOnClickListener(v -> {
+            Log.d(TAG, "Registration Google button clicked");
             hideKeyboardAndClearFocus();
-            startGoogleSignIn();
+            toastShown = false; // Reset toast flag
+            startGoogleSignIn(true); // TRUE = REGISTRATION
         });
 
         // Google Sign-In for Login
         gmailAccountLogin.setOnClickListener(v -> {
+            Log.d(TAG, "Login Google button clicked");
             hideKeyboardAndClearFocus();
-            startGoogleSignIn();
+            toastShown = false; // Reset toast flag
+            startGoogleSignIn(false); // FALSE = LOGIN
         });
     }
 
+    private void setupPolicyLinks(TextView textView) {
+        String text = "By continuing you agree to our Terms and Conditions and Privacy Policy";
+        SpannableString spannableString = new SpannableString(text);
+
+        // Find the position of "Terms and Conditions"
+        int termsStart = text.indexOf("Terms and Conditions");
+        int termsEnd = termsStart + "Terms and Conditions".length();
+
+        // Find the position of "Privacy Policy"
+        int privacyStart = text.indexOf("Privacy Policy");
+        int privacyEnd = privacyStart + "Privacy Policy".length();
+
+        // Create clickable span for Terms and Conditions
+        ClickableSpan termsClickableSpan = new ClickableSpan() {
+            @Override
+            public void onClick(@NonNull View widget) {
+                showTermsAndConditionsDialog();
+            }
+
+            @Override
+            public void updateDrawState(@NonNull TextPaint ds) {
+                super.updateDrawState(ds);
+                ds.setUnderlineText(true);
+                ds.setColor(0xFF0A4B90); // Your app's blue color
+            }
+        };
+
+        // Create clickable span for Privacy Policy
+        ClickableSpan privacyClickableSpan = new ClickableSpan() {
+            @Override
+            public void onClick(@NonNull View widget) {
+                showPrivacyPolicyDialog();
+            }
+
+            @Override
+            public void updateDrawState(@NonNull TextPaint ds) {
+                super.updateDrawState(ds);
+                ds.setUnderlineText(true);
+                ds.setColor(0xFF0A4B90); // Your app's blue color
+            }
+        };
+
+        spannableString.setSpan(termsClickableSpan, termsStart, termsEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        spannableString.setSpan(privacyClickableSpan, privacyStart, privacyEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+        textView.setText(spannableString);
+        textView.setMovementMethod(LinkMovementMethod.getInstance());
+        textView.setHighlightColor(Color.TRANSPARENT);
+    }
+
+    @SuppressLint("InflateParams")
+    private void showTermsAndConditionsDialog() {
+        LayoutInflater inflater = getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.dialog_terms_conditions, null);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setView(dialogView);
+
+        AlertDialog dialog = builder.create();
+        Objects.requireNonNull(dialog.getWindow()).setBackgroundDrawableResource(android.R.color.transparent);
+
+        // Prevent dismissing by clicking outside
+        dialog.setCancelable(false);
+        dialog.setCanceledOnTouchOutside(false);
+
+        // Apply slide up animation
+        Animation slideUp = AnimationUtils.loadAnimation(this, R.anim.formslideup);
+        dialogView.startAnimation(slideUp);
+
+        dialog.show();
+        dialog.getWindow().setLayout(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        dialog.getWindow().setDimAmount(0.7f);
+
+        // Apply gradient to title
+        TextView title = dialogView.findViewById(R.id.dialog_title);
+        GradientTextUtil.applyGradient(title, "#03162A", "#0A4B90");
+
+        // Close button
+        ImageView closeButton = dialogView.findViewById(R.id.close_button);
+        closeButton.setOnClickListener(v -> dialog.dismiss());
+    }
+
+    @SuppressLint("InflateParams")
+    private void showPrivacyPolicyDialog() {
+        LayoutInflater inflater = getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.dialog_privacy_policy, null);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setView(dialogView);
+
+        AlertDialog dialog = builder.create();
+        Objects.requireNonNull(dialog.getWindow()).setBackgroundDrawableResource(android.R.color.transparent);
+
+        // Prevent dismissing by clicking outside
+        dialog.setCancelable(false);
+        dialog.setCanceledOnTouchOutside(false);
+
+        // Apply slide up animation
+        Animation slideUp = AnimationUtils.loadAnimation(this, R.anim.formslideup);
+        dialogView.startAnimation(slideUp);
+
+        dialog.show();
+        dialog.getWindow().setLayout(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        dialog.getWindow().setDimAmount(0.7f);
+
+        // Apply gradient to title
+        TextView title = dialogView.findViewById(R.id.dialog_title);
+        GradientTextUtil.applyGradient(title, "#03162A", "#0A4B90");
+
+        // Close button
+        ImageView closeButton = dialogView.findViewById(R.id.close_button);
+        closeButton.setOnClickListener(v -> dialog.dismiss());
+    }
     private void setupGoogleSignInLauncher() {
         googleSignInLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
@@ -148,27 +292,30 @@ public class MainActivity extends AppCompatActivity {
             public void onSignInSuccess(boolean isNewUser, String email, String firstName, String lastName) {
                 if (isNewUser) {
                     // New user - show complete profile form
+                    Log.d(TAG, "New user detected - showing complete profile form");
                     registrationHandler.hideRegistrationForm();
                     loginHandler.hideLoginForm();
                     completeProfileHandler.showCompleteInfoForm(email, firstName, lastName);
                 } else {
                     // Existing user - proceed to login
+                    Log.d(TAG, "Existing user detected - proceeding to login");
                     proceedToLogin(email, firstName, lastName);
                 }
             }
 
             @Override
             public void onSignInFailure(String error) {
-                Toast.makeText(MainActivity.this, error, Toast.LENGTH_SHORT).show();
+                Log.e(TAG, "Google Sign-In failed: " + error);
+                // Toast is already shown in GoogleSignInHandler
             }
         });
 
         completeProfileHandler.setOnProfileCompleteListener(
                 (email, firstName, lastName, educationalBackground, fieldOfStudy) -> {
-                    android.util.Log.d("MainActivity", "Profile complete callback triggered");
-                    android.util.Log.d("MainActivity", "Email: " + email);
-                    android.util.Log.d("MainActivity", "Educational Background: " + educationalBackground);
-                    android.util.Log.d("MainActivity", "Field of Study: " + fieldOfStudy);
+                    Log.d(TAG, "Profile complete callback triggered");
+                    Log.d(TAG, "Email: " + email);
+                    Log.d(TAG, "Educational Background: " + educationalBackground);
+                    Log.d(TAG, "Field of Study: " + fieldOfStudy);
 
                     // Save the new Google user to database
                     googleSignInHandler.saveNewGoogleUser(
@@ -176,24 +323,25 @@ public class MainActivity extends AppCompatActivity {
                             new GoogleSignInHandler.OnUserSavedListener() {
                                 @Override
                                 public void onSuccess(int userId) {
-                                    android.util.Log.d("MainActivity", "User saved successfully with ID: " + userId);
-                                    Toast.makeText(MainActivity.this,
-                                            "Account created successfully!", Toast.LENGTH_SHORT).show();
+                                    Log.d(TAG, "User saved successfully with ID: " + userId);
 
-                                    // Save session and proceed to app
+                                    // Save session and show success dialog
                                     SessionManager sessionManager = new SessionManager(MainActivity.this);
                                     sessionManager.saveUserSession(email, firstName, lastName,
                                             "notClassified", "Learner", userId);
                                     sessionManager.setLoggedOutFlag(false);
 
-                                    proceedToApp();
+                                    showRegistrationSuccessDialog();
                                 }
 
                                 @Override
                                 public void onFailure(String error) {
-                                    android.util.Log.e("MainActivity", "Failed to save user: " + error);
-                                    Toast.makeText(MainActivity.this,
-                                            "Failed to save profile: " + error, Toast.LENGTH_LONG).show();
+                                    Log.e(TAG, "Failed to save user: " + error);
+                                    if (!toastShown) {
+                                        toastShown = true;
+                                        Toast.makeText(MainActivity.this,
+                                                "Failed to save profile: " + error, Toast.LENGTH_LONG).show();
+                                    }
                                 }
                             }
                     );
@@ -201,8 +349,54 @@ public class MainActivity extends AppCompatActivity {
         );
     }
 
-    private void startGoogleSignIn() {
-        Intent signInIntent = googleSignInHandler.getSignInIntent();
+    @SuppressLint("InflateParams")
+    private void showRegistrationSuccessDialog() {
+        LayoutInflater inflater = getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.dialog_ready_to_join, null);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setView(dialogView);
+
+        AlertDialog dialog = builder.create();
+        Objects.requireNonNull(dialog.getWindow()).setBackgroundDrawableResource(android.R.color.transparent);
+
+        dialog.setCancelable(false);
+        dialog.setCanceledOnTouchOutside(false);
+        dialog.show();
+        dialog.getWindow().setLayout(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        dialog.getWindow().setDimAmount(0.6f);
+
+        TextView title = dialogView.findViewById(R.id.dialog_title);
+        title.setText("Account Created!");
+        GradientTextUtil.applyGradient(title, "#03162A", "#0A4B90");
+
+        TextView message = dialogView.findViewById(R.id.dialog_message);
+        String htmlText = "Your registration was <b><font color='#09417D'>successful!</font></b> You can now log in and explore <b><font color='#09417D'>CodeX: Java</font></b>";
+        message.setText(Html.fromHtml(htmlText, Html.FROM_HTML_MODE_LEGACY));
+
+        MaterialButton btnNo = dialogView.findViewById(R.id.no_btn);
+        MaterialButton btnYes = dialogView.findViewById(R.id.yes_btn);
+
+        btnNo.setText("Cancel");
+        btnYes.setText("Log In");
+
+        btnNo.setOnClickListener(v -> {
+            dialog.dismiss();
+            completeProfileHandler.hideCompleteInfoForm();
+        });
+
+        btnYes.setOnClickListener(v -> {
+            dialog.dismiss();
+            proceedToApp();
+        });
+    }
+
+    private void startGoogleSignIn(boolean isRegistration) {
+        Log.d(TAG, "startGoogleSignIn called with isRegistration: " + isRegistration);
+        Intent signInIntent = googleSignInHandler.getSignInIntent(isRegistration);
         googleSignInLauncher.launch(signInIntent);
     }
 
@@ -227,7 +421,7 @@ public class MainActivity extends AppCompatActivity {
                                             classification, userType, userId);
                                     sessionManager.setLoggedOutFlag(false);
 
-                                    proceedToApp();
+                                    showLoginSuccessDialog(userType, firstName);
                                 }
                             }
                         }
@@ -235,10 +429,43 @@ public class MainActivity extends AppCompatActivity {
 
                     @Override
                     public void onCancelled(@NonNull DatabaseError error) {
-                        Toast.makeText(MainActivity.this,
-                                "Database error: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+                        if (!toastShown) {
+                            toastShown = true;
+                            Toast.makeText(MainActivity.this,
+                                    "Database error: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+                        }
                     }
                 });
+    }
+
+    @SuppressLint("InflateParams")
+    private void showLoginSuccessDialog(String userType, String firstName) {
+        LayoutInflater inflater = getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.login_confirm_msg, null);
+
+        MaterialButton btnYes = dialogView.findViewById(R.id.yes_btn);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setView(dialogView);
+        AlertDialog dialog = builder.create();
+        Objects.requireNonNull(dialog.getWindow()).setBackgroundDrawableResource(android.R.color.transparent);
+        dialog.show();
+
+        dialog.getWindow().setLayout(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        dialog.getWindow().setDimAmount(0.6f);
+        dialog.setCancelable(false);
+        dialog.setCanceledOnTouchOutside(false);
+
+        TextView title = dialogView.findViewById(R.id.dialog_title);
+        GradientTextUtil.applyGradient(title, "#03162A", "#0A4B90");
+
+        btnYes.setOnClickListener(v -> {
+            dialog.dismiss();
+            proceedToApp();
+        });
     }
 
     private void proceedToApp() {

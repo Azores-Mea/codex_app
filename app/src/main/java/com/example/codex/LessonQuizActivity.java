@@ -160,71 +160,62 @@ public class LessonQuizActivity extends AppCompatActivity {
     }
 
     private void loadLessonQuizData() {
-        DatabaseReference lessonRef = FirebaseDatabase.getInstance()
-                .getReference("Lessons")
+        // Load quiz from assessment table
+        DatabaseReference quizRef = FirebaseDatabase.getInstance()
+                .getReference("assessment")
                 .child(lessonId)
-                .child("difficulty");
+                .child("Quiz");
 
-        lessonRef.addListenerForSingleValueEvent(new ValueEventListener() {
+        quizRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 if (!snapshot.exists()) {
-                    Toast.makeText(LessonQuizActivity.this, "No difficulty found for this lesson.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(LessonQuizActivity.this, "No quiz found for this lesson.", Toast.LENGTH_SHORT).show();
+                    finish();
                     return;
                 }
 
-                String difficulty = snapshot.getValue(String.class);
-                if (difficulty == null || difficulty.isEmpty()) {
-                    Toast.makeText(LessonQuizActivity.this, "Difficulty not set for this lesson.", Toast.LENGTH_SHORT).show();
-                    return;
+                questionList.clear();
+                for (DataSnapshot qSnap : snapshot.getChildren()) {
+                    // Get question data and replace &nbsp; with spaces
+                    String questionText = qSnap.child("question").getValue(String.class);
+                    String choiceAText = qSnap.child("choiceA").getValue(String.class);
+                    String choiceBText = qSnap.child("choiceB").getValue(String.class);
+                    String choiceCText = qSnap.child("choiceC").getValue(String.class);
+                    String choiceDText = qSnap.child("choiceD").getValue(String.class);
+                    String correctAnswer = qSnap.child("answer").getValue(String.class);
+
+                    // Replace &nbsp; with regular spaces
+                    if (questionText != null) questionText = questionText.replace("&nbsp;", " ");
+                    if (choiceAText != null) choiceAText = choiceAText.replace("&nbsp;", " ");
+                    if (choiceBText != null) choiceBText = choiceBText.replace("&nbsp;", " ");
+                    if (choiceCText != null) choiceCText = choiceCText.replace("&nbsp;", " ");
+                    if (choiceDText != null) choiceDText = choiceDText.replace("&nbsp;", " ");
+
+                    HashMap<String, String> map = new HashMap<>();
+                    map.put("question", questionText);
+                    map.put("choiceA", choiceAText);
+                    map.put("choiceB", choiceBText);
+                    map.put("choiceC", choiceCText);
+                    map.put("choiceD", choiceDText);
+                    map.put("correctAnswer", correctAnswer);
+                    questionList.add(map);
                 }
 
-                DatabaseReference quizRef = FirebaseDatabase.getInstance()
-                        .getReference("quizQuestions")
-                        .child(difficulty)
-                        .child(lessonId);
-
-                quizRef.addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        if (!snapshot.exists()) {
-                            Toast.makeText(LessonQuizActivity.this, "No quiz found for this lesson.", Toast.LENGTH_SHORT).show();
-                            return;
-                        }
-
-                        questionList.clear();
-                        for (DataSnapshot qSnap : snapshot.getChildren()) {
-                            HashMap<String, String> map = new HashMap<>();
-                            map.put("question", qSnap.child("question").getValue(String.class));
-                            map.put("choiceA", qSnap.child("choiceA").getValue(String.class));
-                            map.put("choiceB", qSnap.child("choiceB").getValue(String.class));
-                            map.put("choiceC", qSnap.child("choiceC").getValue(String.class));
-                            map.put("choiceD", qSnap.child("choiceD").getValue(String.class));
-                            map.put("correctAnswer", qSnap.child("answer").getValue(String.class));
-                            questionList.add(map);
-                        }
-
-                        if (!questionList.isEmpty()) {
-                            quizTitle = "Lesson " + lessonId.toUpperCase() + " Quiz";
-                            currentIndex = 0;
-                            loadQuestion(0);
-                        } else {
-                            Toast.makeText(LessonQuizActivity.this, "No quiz questions available.", Toast.LENGTH_SHORT).show();
-                        }
-                    }
-
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError error) {
-                        Toast.makeText(LessonQuizActivity.this, "Failed to load quiz data.", Toast.LENGTH_SHORT).show();
-                        Log.e("LessonQuizActivity", "Quiz data load error: " + error.getMessage(), error.toException());
-                    }
-                });
+                if (!questionList.isEmpty()) {
+                    currentIndex = 0;
+                    loadQuestion(0);
+                } else {
+                    Toast.makeText(LessonQuizActivity.this, "No quiz questions available.", Toast.LENGTH_SHORT).show();
+                    finish();
+                }
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                Toast.makeText(LessonQuizActivity.this, "Failed to load lesson difficulty.", Toast.LENGTH_SHORT).show();
-                Log.e("LessonQuizActivity", "Lesson difficulty load error: " + error.getMessage(), error.toException());
+                Toast.makeText(LessonQuizActivity.this, "Failed to load quiz data.", Toast.LENGTH_SHORT).show();
+                Log.e("LessonQuizActivity", "Quiz data load error: " + error.getMessage(), error.toException());
+                finish();
             }
         });
     }
@@ -396,7 +387,7 @@ public class LessonQuizActivity extends AppCompatActivity {
         DatabaseReference recentRef = FirebaseDatabase.getInstance()
                 .getReference("RecentAct")
                 .child(String.valueOf(userId))
-                .push();  // <-- AUTO ID (same as InitialTest)
+                .push();
 
         HashMap<String, Object> record = new HashMap<>();
         record.put("items", total);
@@ -413,8 +404,6 @@ public class LessonQuizActivity extends AppCompatActivity {
                 .addOnFailureListener(e -> Log.e("LessonQuiz", "Failed to save recent activity: " + e.getMessage()));
     }
 
-
-
     private int calculateScore() {
         int score = 0;
         for (int i = 0; i < questionList.size(); i++) {
@@ -427,7 +416,6 @@ public class LessonQuizActivity extends AppCompatActivity {
 
     private void showFinalDialog(int score, int total, String classification) {
         setResult(RESULT_OK);
-        finish(); // <-- closes and returns to previous Activity or Fragment container
+        finish();
     }
-
 }

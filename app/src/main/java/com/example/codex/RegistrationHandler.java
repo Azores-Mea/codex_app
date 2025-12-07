@@ -3,9 +3,11 @@ package com.example.codex;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.AutomaticZenRule;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.text.Html;
+import android.text.InputFilter;
 import android.text.method.PasswordTransformationMethod;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -16,6 +18,7 @@ import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -38,14 +41,16 @@ public class RegistrationHandler {
 
     private final ConstraintLayout registrationLayout;
     private final MaterialButton confirmBtn;
+
+    private final ScrollView registrationScrollView;
+    private final MaterialButton gmailAccount;
     private final List<EditText> fields = new ArrayList<>();
-    private final EditText regName, regLName, regEmail, regFieldOfStudy;
+    private final EditText regName, regLName, regEmail, regFieldOfStudy, regFieldOfStudyComplete;
     private final TextInputEditText regPassword, regConfirmPassword;
-    private final AutoCompleteTextView regEducationalBackground;
+    private final AutoCompleteTextView regEducationalBackground, regEducationalBackgroundComplete;
     private final TextView checkEmail, checkPass, checkConfirmPass;
     private final TextInputLayout emailLayout, passLayout, confirmPassLayout, educationalBackgroundLayout,
-            firstNameLayout, lastNameLayout, fieldOfStudyLayout;
-
+            firstNameLayout, lastNameLayout, fieldOfStudyLayout, educationalBackgroundLayoutComplete, fieldOfStudyLayoutComplete;
     private boolean isVisible = false;
     private boolean isEmailValid = false;
     private boolean isPasswordValid = false;
@@ -55,6 +60,7 @@ public class RegistrationHandler {
     private final int COLOR_VALID = Color.parseColor("#06651A");
     private final int COLOR_INVALID = Color.parseColor("#F44336");
 
+    private boolean shouldBringWCFormToFront = true;
     // Callback interface
     public interface OnRegistrationCompleteListener {
         void onLoginRequested();
@@ -66,12 +72,18 @@ public class RegistrationHandler {
         this.listener = listener;
     }
 
+    public void setShouldBringWCFormToFront(boolean shouldBring) {
+        this.shouldBringWCFormToFront = shouldBring;
+    }
+
     public RegistrationHandler(Activity activity, DatabaseReference databaseReference) {
         this.activity = activity;
         this.usersRef = databaseReference;
 
         registrationLayout = activity.findViewById(R.id.registration);
         confirmBtn = activity.findViewById(R.id.confirmBtn);
+        gmailAccount = activity.findViewById(R.id.gmailAccount);
+        registrationScrollView = activity.findViewById(R.id.scrollView); // Use your actual ScrollView ID
 
         regName = activity.findViewById(R.id.firsNameInput);
         regLName = activity.findViewById(R.id.lastNameInput);
@@ -93,6 +105,11 @@ public class RegistrationHandler {
         educationalBackgroundLayout = activity.findViewById(R.id.educationalBackgroundLayout);
         fieldOfStudyLayout = activity.findViewById(R.id.fieldOfStudyLayout);
 
+        educationalBackgroundLayoutComplete = activity.findViewById(R.id.educationalBackgroundLayoutComplete);
+        fieldOfStudyLayoutComplete = activity.findViewById(R.id.fieldOfStudyLayoutComplete);
+        regEducationalBackgroundComplete = activity.findViewById(R.id.educationalBackgroundInputComplete);
+        regFieldOfStudyComplete = activity.findViewById(R.id.fieldOfStudyInputComplete);
+
         // Add required fields (excluding optional Field of Study)
         fields.add(regName);
         fields.add(regLName);
@@ -101,7 +118,6 @@ public class RegistrationHandler {
         fields.add(regConfirmPassword);
 
         registrationLayout.setVisibility(ConstraintLayout.GONE);
-        confirmBtn.setVisibility(MaterialButton.GONE);
         confirmBtn.setEnabled(false);
         confirmBtn.setAlpha(0.5f);
 
@@ -123,6 +139,28 @@ public class RegistrationHandler {
         );
         regConfirmPassword.setTransformationMethod(PasswordTransformationMethod.getInstance());
         confirmPassLayout.setEndIconActivated(false);
+
+        InputFilter nameFilter = (source, start, end, dest, dstart, dend) -> {
+            for (int i = start; i < end; i++) {
+                char c = source.charAt(i);
+
+                // Allow letters, digits, spaces, hyphens
+                if (!Character.isLetterOrDigit(c) && c != ' ' && c != '-') {
+                    return ""; // Reject invalid characters
+                }
+            }
+
+            return null; // Accept input
+        };
+
+// Attach filter to first name and last name
+        regName.setFilters(new InputFilter[]{ nameFilter });
+        regLName.setFilters(new InputFilter[]{ nameFilter });
+
+
+        // Attach filter to first name and last name
+        regName.setFilters(new InputFilter[]{ nameFilter });
+        regLName.setFilters(new InputFilter[]{ nameFilter });
 
         setupListeners();
         TextView title = activity.findViewById(R.id.registration_title);
@@ -153,6 +191,13 @@ public class RegistrationHandler {
 
         fieldOfStudyLayout.setBoxStrokeColorStateList(defaultColorStateList);
         fieldOfStudyLayout.setHintTextColor(defaultColorStateList);
+
+        educationalBackgroundLayoutComplete.setBoxStrokeColorStateList(defaultColorStateList);
+        educationalBackgroundLayoutComplete.setHintTextColor(defaultColorStateList);
+
+        fieldOfStudyLayoutComplete.setBoxStrokeColorStateList(defaultColorStateList);
+        fieldOfStudyLayoutComplete.setHintTextColor(defaultColorStateList);
+
     }
 
     private ColorStateList createColorStateList() {
@@ -221,8 +266,36 @@ public class RegistrationHandler {
         // Password validation
         regPassword.addTextChangedListener(new SimpleTextWatcher(() -> {
             validatePassword();
-            validateConfirmPassword(); // Re-validate confirm password when password changes
+            validateConfirmPassword();
         }));
+        regPassword.setOnFocusChangeListener((v, hasFocus) -> {
+            if (!hasFocus) {
+                // When password field loses focus, reset to default if not valid
+                String password = regPassword.getText().toString();
+                if (password.isEmpty() || !ValidationUtils.isStrongPassword(password)) {
+                    passLayout.setBoxStrokeColorStateList(createColorStateList());
+                    passLayout.setHintTextColor(createColorStateList());
+                }
+            } else {
+                // When focused, validate immediately
+                validatePassword();
+            }
+        });
+
+        regConfirmPassword.setOnFocusChangeListener((v, hasFocus) -> {
+            if (!hasFocus) {
+                // When confirm password field loses focus, reset to default if not valid
+                String password = regPassword.getText().toString();
+                String confirmPassword = regConfirmPassword.getText().toString();
+                if (confirmPassword.isEmpty() || !password.equals(confirmPassword)) {
+                    confirmPassLayout.setBoxStrokeColorStateList(createColorStateList());
+                    confirmPassLayout.setHintTextColor(createColorStateList());
+                }
+            } else {
+                // When focused, validate immediately
+                validateConfirmPassword();
+            }
+        });
 
         // Confirm Password validation
         regConfirmPassword.addTextChangedListener(new SimpleTextWatcher(this::validateConfirmPassword));
@@ -242,7 +315,7 @@ public class RegistrationHandler {
         }
 
         if (!ValidationUtils.isValidEmail(email)) {
-            setInvalidEmail("Invalid email format (example@gmail.com)");
+            setInvalidEmail("Please input a valid email address.");
             isEmailValid = false;
             validateAllConditions();
             return;
@@ -256,7 +329,7 @@ public class RegistrationHandler {
                             setInvalidEmail("This email is already in use.");
                             isEmailValid = false;
                         } else {
-                            setValidEmail("Valid email address.");
+                            setValidEmail("");
                             isEmailValid = true;
                         }
                         validateAllConditions();
@@ -295,7 +368,9 @@ public class RegistrationHandler {
 
         if (password.isEmpty()) {
             checkPass.setText("");
-            setDefaultFieldColors(); // Reset to default
+            // Reset to default colors
+            passLayout.setBoxStrokeColorStateList(createColorStateList());
+            passLayout.setHintTextColor(createColorStateList());
             isPasswordValid = false;
             validateAllConditions();
             return;
@@ -304,14 +379,34 @@ public class RegistrationHandler {
         if (!ValidationUtils.isStrongPassword(password)) {
             checkPass.setText("Use 8-20 characters with upper and lowercase letters, numbers, and special symbols. No spaces or common passwords allowed.");
             checkPass.setTextColor(COLOR_INVALID);
-            passLayout.setHintTextColor(ColorStateList.valueOf(COLOR_INVALID));
-            passLayout.setBoxStrokeColorStateList(ColorStateList.valueOf(COLOR_INVALID));
+
+            // Create ColorStateList for invalid state
+            int[][] states = new int[][] {
+                    new int[] { android.R.attr.state_focused },
+                    new int[] { -android.R.attr.state_focused }
+            };
+            int[] colors = new int[] { COLOR_INVALID, COLOR_INVALID };
+            ColorStateList invalidColorStateList = new ColorStateList(states, colors);
+
+            passLayout.setBoxStrokeColorStateList(invalidColorStateList);
+            passLayout.setHintTextColor(invalidColorStateList);
+
             isPasswordValid = false;
         } else {
-            checkPass.setText("Strong password.");
+            checkPass.setText("");
             checkPass.setTextColor(COLOR_VALID);
-            passLayout.setHintTextColor(ColorStateList.valueOf(COLOR_VALID));
-            passLayout.setBoxStrokeColorStateList(ColorStateList.valueOf(COLOR_VALID));
+
+            // Create ColorStateList for valid state
+            int[][] states = new int[][] {
+                    new int[] { android.R.attr.state_focused },
+                    new int[] { -android.R.attr.state_focused }
+            };
+            int[] colors = new int[] { COLOR_VALID, COLOR_VALID };
+            ColorStateList validColorStateList = new ColorStateList(states, colors);
+
+            passLayout.setBoxStrokeColorStateList(validColorStateList);
+            passLayout.setHintTextColor(validColorStateList);
+
             isPasswordValid = true;
         }
 
@@ -325,7 +420,9 @@ public class RegistrationHandler {
 
         if (confirmPassword.isEmpty()) {
             checkConfirmPass.setText("");
-            setDefaultFieldColors(); // Reset to default
+            // Reset ONLY confirm password field to default
+            confirmPassLayout.setBoxStrokeColorStateList(createColorStateList());
+            confirmPassLayout.setHintTextColor(createColorStateList());
             isConfirmPasswordValid = false;
             validateAllConditions();
             return;
@@ -334,14 +431,34 @@ public class RegistrationHandler {
         if (!password.equals(confirmPassword)) {
             checkConfirmPass.setText("Passwords do not match.");
             checkConfirmPass.setTextColor(COLOR_INVALID);
-            confirmPassLayout.setHintTextColor(ColorStateList.valueOf(COLOR_INVALID));
-            confirmPassLayout.setBoxStrokeColorStateList(ColorStateList.valueOf(COLOR_INVALID));
+
+            // Create ColorStateList for invalid state
+            int[][] states = new int[][] {
+                    new int[] { android.R.attr.state_focused },
+                    new int[] { -android.R.attr.state_focused }
+            };
+            int[] colors = new int[] { COLOR_INVALID, COLOR_INVALID };
+            ColorStateList invalidColorStateList = new ColorStateList(states, colors);
+
+            confirmPassLayout.setBoxStrokeColorStateList(invalidColorStateList);
+            confirmPassLayout.setHintTextColor(invalidColorStateList);
+
             isConfirmPasswordValid = false;
         } else {
-            checkConfirmPass.setText("Passwords match.");
+            checkConfirmPass.setText("");
             checkConfirmPass.setTextColor(COLOR_VALID);
-            confirmPassLayout.setHintTextColor(ColorStateList.valueOf(COLOR_VALID));
-            confirmPassLayout.setBoxStrokeColorStateList(ColorStateList.valueOf(COLOR_VALID));
+
+            // Create ColorStateList for valid state
+            int[][] states = new int[][] {
+                    new int[] { android.R.attr.state_focused },
+                    new int[] { -android.R.attr.state_focused }
+            };
+            int[] colors = new int[] { COLOR_VALID, COLOR_VALID };
+            ColorStateList validColorStateList = new ColorStateList(states, colors);
+
+            confirmPassLayout.setBoxStrokeColorStateList(validColorStateList);
+            confirmPassLayout.setHintTextColor(validColorStateList);
+
             isConfirmPasswordValid = true;
         }
 
@@ -447,7 +564,11 @@ public class RegistrationHandler {
         });
         btnYes.setOnClickListener(v -> {
             dialog.dismiss();
+            shouldBringWCFormToFront = false;
+            hideRegistrationForm();
+            // then show login form
             if (listener != null) listener.onLoginRequested();
+
         });
     }
 
@@ -502,36 +623,88 @@ public class RegistrationHandler {
     }
 
     // --- Show / Hide form ---
-    public void showRegistrationForm() {
-        if (isVisible) return;
-        isVisible = true;
-
-        registrationLayout.setClickable(true);
-        registrationLayout.setVisibility(ConstraintLayout.VISIBLE);
-        registrationLayout.bringToFront();
-        registrationLayout.startAnimation(AnimationUtils.loadAnimation(activity, R.anim.formslideup));
-
-        confirmBtn.setVisibility(MaterialButton.GONE);
-        clearFields();
-    }
-
     public void hideRegistrationForm() {
         if (!isVisible) return;
+
+        // Disable interaction immediately
+        registrationLayout.setClickable(false);
+        registrationLayout.setEnabled(false);
+        gmailAccount.setEnabled(false);
+        regEducationalBackground.setEnabled(false);
+        regFieldOfStudy.setEnabled(false);
+        for (EditText field : fields) {
+            field.setEnabled(false);
+        }
 
         Animation slideDown = AnimationUtils.loadAnimation(activity, R.anim.formslidedown);
         registrationLayout.startAnimation(slideDown);
 
         slideDown.setAnimationListener(new Animation.AnimationListener() {
-            @Override public void onAnimationStart(Animation animation) {}
-            @Override public void onAnimationRepeat(Animation animation) {}
+            @Override
+            public void onAnimationStart(Animation animation) {
+                // Animation started - form already disabled above
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {}
+
             @Override
             public void onAnimationEnd(Animation animation) {
                 registrationLayout.setVisibility(ConstraintLayout.GONE);
-                clearFields();
-                registrationLayout.setClickable(false);
                 isVisible = false;
+                clearFields();
+
+                // Reset scroll position
+                if (registrationScrollView != null) {
+                    registrationScrollView.smoothScrollTo(0, 0);
+                }
+
+                // Immediately make wcform available - no delay
+                View wcform = activity.findViewById(R.id.wcform);
+                if (wcform != null) {
+                    wcform.setClickable(true);
+                    wcform.setEnabled(true);
+                    wcform.setFocusable(true);
+                    if (shouldBringWCFormToFront) {
+                        wcform.bringToFront();
+                        wcform.requestLayout(); // Force layout update
+                    }
+                }
+                shouldBringWCFormToFront = true; // reset for next time
             }
         });
+    }
+
+    public void showRegistrationForm() {
+        if (isVisible) return;
+        isVisible = true;
+
+        // Enable fields
+        for (EditText field : fields) {
+            field.setEnabled(true);
+        }
+        gmailAccount.setEnabled(true);
+        regEducationalBackground.setEnabled(true);
+        regFieldOfStudy.setEnabled(true);
+
+        // Make wcform non-interactive immediately
+        View wcform = activity.findViewById(R.id.wcform);
+        if (wcform != null) {
+            wcform.setClickable(false);
+            wcform.setEnabled(false);
+        }
+
+        // Setup registration form
+        registrationLayout.setVisibility(ConstraintLayout.VISIBLE);
+        registrationLayout.setClickable(true);
+        registrationLayout.setEnabled(true);
+        registrationLayout.bringToFront();
+        registrationLayout.requestLayout(); // Force layout update
+
+        Animation slideUp = AnimationUtils.loadAnimation(activity, R.anim.formslideup);
+        registrationLayout.startAnimation(slideUp);
+
+        clearFields();
     }
 
     // --- Reset form ---

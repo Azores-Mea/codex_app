@@ -1,7 +1,6 @@
 package com.example.codex;
 
 import android.content.Intent;
-import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.text.Html;
@@ -9,12 +8,18 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.EditText;
+import android.widget.ScrollView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
@@ -29,6 +34,7 @@ import com.google.firebase.database.ValueEventListener;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ReviewDisplayFragment extends Fragment {
 
@@ -38,17 +44,40 @@ public class ReviewDisplayFragment extends Fragment {
     private static final String TAG = "ReviewDisplayFragment";
 
     private String lessonId, mainTitle, difficulty;
-    private MaterialButton btnQuiz, btnCoding, btnPrev, btnNext;
+    private MaterialButton btnPrev, btnNext;
     private LinearLayout container;
     private ImageView backButton;
     private TextView headerTitle;
+    private Spinner assessmentTypeSpinner;
 
     private SessionManager sessionManager;
     private int userId;
 
+    private List<String> assessmentTypes = new ArrayList<>();
+    private String currentAssessmentType = "Quiz";
+
+    // Availability flags
+    private boolean codingAvailable = false;
+    private boolean machineProblemAvailable = false;
+    private boolean syntaxErrorAvailable = false;
+    private boolean programTracingAvailable = false;
+    private boolean quizTaken = false;
+
+    // Quiz data
     private List<HashMap<String, String>> questionList = new ArrayList<>();
     private HashMap<Integer, String> userAnswers = new HashMap<>();
     private int currentQuestionIndex = 0;
+
+    // Syntax Error data
+    private List<Exercise> syntaxExerciseList = new ArrayList<>();
+    private Map<Integer, SyntaxSubmission> syntaxSubmissions = new HashMap<>();
+    private int currentSyntaxIndex = 0;
+
+    // Program Tracing data
+    private List<TracingExercise> tracingExerciseList = new ArrayList<>();
+    private Map<Integer, TracingAnswerSubmission> tracingSubmissions = new HashMap<>();
+    private int currentTracingIndex = 0;
+    // Fragment Lifecycle Methods
 
     public static ReviewDisplayFragment newInstance(String lessonId, String mainTitle, String difficulty) {
         ReviewDisplayFragment fragment = new ReviewDisplayFragment();
@@ -85,14 +114,13 @@ public class ReviewDisplayFragment extends Fragment {
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // Find views from review_display.xml
+        // Find views
         container = view.findViewById(R.id.review_container);
-        btnQuiz = view.findViewById(R.id.quiz);
-        btnCoding = view.findViewById(R.id.coding);
+        assessmentTypeSpinner = view.findViewById(R.id.assessmentTypeSpinner);
         backButton = view.findViewById(R.id.back);
         headerTitle = view.findViewById(R.id.headerTitle);
 
-        if (container == null || btnQuiz == null || btnCoding == null) {
+        if (container == null || assessmentTypeSpinner == null) {
             Log.e(TAG, "Required views not found!");
             return;
         }
@@ -109,113 +137,212 @@ public class ReviewDisplayFragment extends Fragment {
             }
         });
 
-        // Set Quiz button as active by default
-        setActiveButton(btnQuiz);
-
-        // Set up button click listeners
-        setupButtonListeners();
-
-        // Check for coding exercise availability
-        checkCodingExerciseAvailability();
-
-        // Load quiz content by default
-        loadQuizContent();
+        // Check all assessments availability
+        checkAllAssessmentsAvailability();
     }
+    // Assessment Availability Methods
 
-    private void setupButtonListeners() {
-        btnQuiz.setOnClickListener(v -> {
-            Log.d(TAG, "Quiz button clicked");
-            setActiveButton(btnQuiz);
-            currentQuestionIndex = 0;
-            loadQuizContent();
-        });
-
-        btnCoding.setOnClickListener(v -> {
-            Log.d(TAG, "Coding button clicked");
-
-            if (btnCoding.isEnabled()) {
-                // Open ExerciseActivity
-                Intent intent = new Intent(requireContext(), ExerciseActivity.class);
-                intent.putExtra("lessonId", lessonId);
-                intent.putExtra("mainTitle", mainTitle);
-                intent.putExtra("difficulty", difficulty);
-                startActivity(intent);
-            }
-        });
-
-    }
-
-    private void setActiveButton(MaterialButton activeButton) {
-
-        // --- RESET all buttons to default ---
-        resetSelectButton(btnQuiz);
-        resetSelectButton(btnCoding);
-
-        // --- APPLY ACTIVE STATE ---
-        activeButton.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#03162A")));
-        activeButton.setTextColor(Color.parseColor("#F5F5F5"));
-        activeButton.setEnabled(true);
-        activeButton.setAlpha(1f);
-    }
-
-    private void resetSelectButton(MaterialButton button) {
-        button.setBackgroundTintList(null);
-        button.setTextColor(ContextCompat.getColor(requireContext(), R.color.secondary));
-        // ❌ DO NOT touch enabled/alpha here
-    }
-
-
-
-
-    private void checkCodingExerciseAvailability() {
+    private void checkAllAssessmentsAvailability() {
         if (!isAdded() || lessonId == null || lessonId.isEmpty()) {
-            Log.w(TAG, "LessonId is null or empty. Disabling coding button.");
-            disableCodingButton();
+            Log.w(TAG, "LessonId is null or empty.");
+            setupAssessmentTypeSpinner();
             return;
         }
 
-        DatabaseReference codingRef = FirebaseDatabase.getInstance()
-                .getReference("coding_exercises")
+        DatabaseReference assessmentRef = FirebaseDatabase.getInstance()
+                .getReference("assessment")
                 .child(lessonId);
 
-        codingRef.addListenerForSingleValueEvent(new ValueEventListener() {
+        assessmentRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 if (!isAdded()) return;
 
-                if (snapshot.exists() && snapshot.getChildrenCount() > 1) {
-                    // There is a valid coding exercise (index 0 is null so at least 1 real item)
-                    Log.d(TAG, "Coding exercises found for lesson: " + lessonId);
-                    enableCodingButton();
-                } else {
-                    Log.d(TAG, "No coding exercises found for lesson: " + lessonId);
-                    disableCodingButton();
+                // Check Machine Problem
+                if (snapshot.hasChild("MachineProblem")) {
+                    DataSnapshot mpSnap = snapshot.child("MachineProblem");
+                    for (DataSnapshot child : mpSnap.getChildren()) {
+                        if (child.exists() && child.getValue() != null) {
+                            machineProblemAvailable = true;
+                            break;
+                        }
+                    }
                 }
+
+                // Check Finding Syntax Error
+                if (snapshot.hasChild("FindingSyntaxError")) {
+                    DataSnapshot seSnap = snapshot.child("FindingSyntaxError");
+                    int validCount = 0;
+                    for (DataSnapshot child : seSnap.getChildren()) {
+                        if (child.exists() && child.getValue() != null) {
+                            validCount++;
+                        }
+                    }
+                    syntaxErrorAvailable = validCount > 1;
+                }
+
+                // Check Program Tracing
+                if (snapshot.hasChild("ProgramTracing")) {
+                    DataSnapshot ptSnap = snapshot.child("ProgramTracing");
+                    int validCount = 0;
+                    for (DataSnapshot child : ptSnap.getChildren()) {
+                        if (child.exists() && child.getValue() != null) {
+                            validCount++;
+                        }
+                    }
+                    programTracingAvailable = validCount > 1;
+                }
+
+                // Check Coding Exercises
+                DatabaseReference codingRef = FirebaseDatabase.getInstance()
+                        .getReference("coding_exercises")
+                        .child(lessonId);
+
+                codingRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot codingSnapshot) {
+                        if (!isAdded()) return;
+
+                        codingAvailable = codingSnapshot.exists() && codingSnapshot.getChildrenCount() > 1;
+
+                        Log.d(TAG, "Assessments available - Coding: " + codingAvailable +
+                                ", MP: " + machineProblemAvailable +
+                                ", Syntax: " + syntaxErrorAvailable +
+                                ", Tracing: " + programTracingAvailable);
+
+                        setupAssessmentTypeSpinner();
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        if (!isAdded()) return;
+                        Log.e(TAG, "Error checking coding exercises: " + error.getMessage());
+                        setupAssessmentTypeSpinner();
+                    }
+                });
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
                 if (!isAdded()) return;
-                Log.e(TAG, "Error checking coding exercises: " + error.getMessage());
-                disableCodingButton();
+                Log.e(TAG, "Error checking assessments: " + error.getMessage());
+                setupAssessmentTypeSpinner();
             }
         });
     }
+    // Spinner Setup Methods
 
+    private void setupAssessmentTypeSpinner() {
+        assessmentTypes.clear();
 
-    private void enableCodingButton() {
-        if (btnCoding != null) {
-            btnCoding.setEnabled(true);
-            btnCoding.setAlpha(1.0f);
+        // Always add Quiz first (most common)
+        assessmentTypes.add("Quiz");
+
+        // Add only available assessments
+        if (codingAvailable) {
+            assessmentTypes.add("Exercise");
+        }
+        if (machineProblemAvailable) {
+            assessmentTypes.add("Machine Problem");
+        }
+        if (syntaxErrorAvailable) {
+            assessmentTypes.add("Finding Syntax Error");
+        }
+        if (programTracingAvailable) {
+            assessmentTypes.add("Program Tracing");
+        }
+
+        // Create custom adapter
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(
+                requireContext(),
+                android.R.layout.simple_spinner_item,
+                assessmentTypes
+        ) {
+            @Override
+            public View getView(int position, View convertView, ViewGroup parent) {
+                View view = super.getView(position, convertView, parent);
+                TextView text = (TextView) view.findViewById(android.R.id.text1);
+                text.setTextColor(ContextCompat.getColor(requireContext(), R.color.primary));
+                text.setTextSize(16);
+                text.setPadding(16, 16, 16, 16);
+                return view;
+            }
+
+            @Override
+            public View getDropDownView(int position, View convertView, ViewGroup parent) {
+                View view = super.getDropDownView(position, convertView, parent);
+                TextView text = (TextView) view.findViewById(android.R.id.text1);
+                text.setTextColor(ContextCompat.getColor(requireContext(), R.color.primary));
+                text.setTextSize(16);
+                text.setPadding(32, 24, 32, 24);
+
+                // Highlight selected item
+                if (assessmentTypes.get(position).equals(currentAssessmentType)) {
+                    view.setBackgroundColor(Color.parseColor("#E3F2FD"));
+                } else {
+                    view.setBackgroundColor(Color.WHITE);
+                }
+
+                return view;
+            }
+        };
+
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        assessmentTypeSpinner.setAdapter(adapter);
+
+        assessmentTypeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                currentAssessmentType = assessmentTypes.get(position);
+                currentQuestionIndex = 0;
+                currentSyntaxIndex = 0;
+                currentTracingIndex = 0;
+                loadAssessmentContent();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                // Do nothing
+            }
+        });
+
+        // Load initial content (Quiz by default)
+        loadAssessmentContent();
+    }
+
+    private void loadAssessmentContent() {
+        switch (currentAssessmentType) {
+            case "Quiz":
+                loadQuizContent();
+                break;
+            case "Exercise":
+                openExerciseActivity();
+                break;
+            case "Machine Problem":
+                loadMachineProblemContent();
+                break;
+            case "Finding Syntax Error":
+                loadSyntaxErrorContent();
+                break;
+            case "Program Tracing":
+                loadProgramTracingContent();
+                break;
+            default:
+                loadQuizContent();
         }
     }
 
-    private void disableCodingButton() {
-        if (btnCoding != null) {
-            btnCoding.setEnabled(false);
-            btnCoding.setAlpha(0.5f);
-        }
+    private void openExerciseActivity() {
+        Intent intent = new Intent(requireContext(), ExerciseActivity.class);
+        intent.putExtra("lessonId", lessonId);
+        intent.putExtra("mainTitle", mainTitle);
+        intent.putExtra("difficulty", difficulty);
+        startActivity(intent);
+
+        // Reset spinner back to Quiz after opening exercise
+        assessmentTypeSpinner.setSelection(0);
     }
+    // Quiz Review Methods
 
     private void loadQuizContent() {
         container.removeAllViews();
@@ -251,6 +378,7 @@ public class ReviewDisplayFragment extends Fragment {
         });
     }
 
+    // Modify the loadQuizData() method to check if quiz was taken:
     private void loadQuizData() {
         DatabaseReference lessonRef = FirebaseDatabase.getInstance()
                 .getReference("Lessons")
@@ -268,37 +396,65 @@ public class ReviewDisplayFragment extends Fragment {
                     return;
                 }
 
-                // Load questions
-                DatabaseReference quizRef = FirebaseDatabase.getInstance()
-                        .getReference("quizQuestions")
-                        .child(diff)
+                // First check if user has taken the quiz
+                DatabaseReference quizResultsRef = FirebaseDatabase.getInstance()
+                        .getReference("quizResults")
+                        .child(String.valueOf(userId))
                         .child(lessonId);
 
-                quizRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                quizResultsRef.addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
-                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    public void onDataChange(@NonNull DataSnapshot resultSnapshot) {
                         if (!isAdded()) return;
 
-                        questionList.clear();
-                        for (DataSnapshot qSnap : snapshot.getChildren()) {
-                            HashMap<String, String> map = new HashMap<>();
-                            map.put("question", qSnap.child("question").getValue(String.class));
-                            map.put("choiceA", qSnap.child("choiceA").getValue(String.class));
-                            map.put("choiceB", qSnap.child("choiceB").getValue(String.class));
-                            map.put("choiceC", qSnap.child("choiceC").getValue(String.class));
-                            map.put("choiceD", qSnap.child("choiceD").getValue(String.class));
-                            map.put("correctAnswer", qSnap.child("answer").getValue(String.class));
-                            questionList.add(map);
+                        if (!resultSnapshot.exists()) {
+                            // User hasn't taken the quiz
+                            quizTaken = false;
+                            showQuizNotTakenMessage();
+                            return;
                         }
 
-                        // Load user answers
-                        loadUserAnswers();
+                        quizTaken = true;
+
+                        // Load questions
+                        DatabaseReference quizRef = FirebaseDatabase.getInstance()
+                                .getReference("quizQuestions")
+                                .child(diff)
+                                .child(lessonId);
+
+                        quizRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                if (!isAdded()) return;
+
+                                questionList.clear();
+                                for (DataSnapshot qSnap : snapshot.getChildren()) {
+                                    HashMap<String, String> map = new HashMap<>();
+                                    map.put("question", qSnap.child("question").getValue(String.class));
+                                    map.put("choiceA", qSnap.child("choiceA").getValue(String.class));
+                                    map.put("choiceB", qSnap.child("choiceB").getValue(String.class));
+                                    map.put("choiceC", qSnap.child("choiceC").getValue(String.class));
+                                    map.put("choiceD", qSnap.child("choiceD").getValue(String.class));
+                                    map.put("correctAnswer", qSnap.child("answer").getValue(String.class));
+                                    questionList.add(map);
+                                }
+
+                                // Load user answers
+                                loadUserAnswers();
+                            }
+
+                            @Override
+                            public void onCancelled(@NonNull DatabaseError error) {
+                                if (!isAdded()) return;
+                                showError("Failed to load quiz questions");
+                            }
+                        });
                     }
 
                     @Override
                     public void onCancelled(@NonNull DatabaseError error) {
                         if (!isAdded()) return;
-                        showError("Failed to load quiz questions");
+                        showError("Failed to check quiz status");
                     }
                 });
             }
@@ -309,6 +465,61 @@ public class ReviewDisplayFragment extends Fragment {
                 showError("Failed to load difficulty");
             }
         });
+    }
+
+    // Add this new method to show a message when quiz hasn't been taken:
+    private void showQuizNotTakenMessage() {
+        container.removeAllViews();
+
+        LinearLayout messageLayout = new LinearLayout(requireContext());
+        messageLayout.setOrientation(LinearLayout.VERTICAL);
+        messageLayout.setGravity(android.view.Gravity.CENTER);
+        messageLayout.setPadding(48, 48, 48, 48);
+
+        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT);
+        messageLayout.setLayoutParams(layoutParams);
+
+        // Icon or emoji
+        TextView icon = new TextView(requireContext());
+        icon.setText("📝");
+        icon.setTextSize(48);
+        icon.setGravity(android.view.Gravity.CENTER);
+        LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT);
+        iconParams.bottomMargin = 16;
+        icon.setLayoutParams(iconParams);
+
+        // Title
+        TextView title = new TextView(requireContext());
+        title.setText("Quiz Not Taken");
+        title.setTextSize(20);
+        title.setTextColor(ContextCompat.getColor(requireContext(), R.color.primary));
+        title.setTypeface(null, android.graphics.Typeface.BOLD);
+        title.setGravity(android.view.Gravity.CENTER);
+        LinearLayout.LayoutParams titleParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT);
+        titleParams.bottomMargin = 8;
+        title.setLayoutParams(titleParams);
+
+        // Message
+        TextView message = new TextView(requireContext());
+        message.setText("You haven't taken this quiz yet.\nPlease complete the quiz first to view your review.");
+        message.setTextSize(16);
+        message.setTextColor(ContextCompat.getColor(requireContext(), R.color.secondary));
+        message.setGravity(android.view.Gravity.CENTER);
+        message.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        messageLayout.addView(icon);
+        messageLayout.addView(title);
+        messageLayout.addView(message);
+
+        container.addView(messageLayout);
     }
 
     private void loadUserAnswers() {
@@ -343,6 +554,7 @@ public class ReviewDisplayFragment extends Fragment {
             }
         });
     }
+    // Quiz Display Methods
 
     private void displayQuestion(int index) {
         if (index < 0 || index >= questionList.size()) return;
@@ -450,7 +662,6 @@ public class ReviewDisplayFragment extends Fragment {
     private void highlightAnswer(MaterialCardView card, LinearLayout bg, TextView text,
                                  TextView letter, boolean isCorrect) {
         if (isCorrect) {
-            // Green for correct answer
             card.setStrokeColor(Color.parseColor("#4CAF50"));
             card.setStrokeWidth(6);
             bg.setBackgroundColor(Color.parseColor("#C8E6C9"));
@@ -458,7 +669,6 @@ public class ReviewDisplayFragment extends Fragment {
             letter.setTextColor(Color.WHITE);
             letter.setBackgroundResource(R.drawable.choice_circle_selected);
         } else {
-            // Red for wrong answer
             card.setStrokeColor(Color.parseColor("#F44336"));
             card.setStrokeWidth(6);
             bg.setBackgroundColor(Color.parseColor("#FFCDD2"));
@@ -483,12 +693,12 @@ public class ReviewDisplayFragment extends Fragment {
         if (index > 0) {
             btnPrev.setEnabled(true);
             btnPrev.setAlpha(1f);
-            btnPrev.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#03162A")));
+            btnPrev.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.parseColor("#03162A")));
             btnPrev.setTextColor(Color.WHITE);
         } else {
             btnPrev.setEnabled(false);
             btnPrev.setAlpha(0.5f);
-            btnPrev.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#E0E0E0")));
+            btnPrev.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.parseColor("#E0E0E0")));
             btnPrev.setTextColor(Color.BLACK);
         }
 
@@ -496,26 +706,703 @@ public class ReviewDisplayFragment extends Fragment {
         if (index < questionList.size() - 1) {
             btnNext.setEnabled(true);
             btnNext.setAlpha(1f);
-            btnNext.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#03162A")));
+            btnNext.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.parseColor("#03162A")));
             btnNext.setTextColor(Color.WHITE);
             btnNext.setText("Next");
         } else {
             btnNext.setEnabled(false);
             btnNext.setAlpha(0.5f);
-            btnNext.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#E0E0E0")));
+            btnNext.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.parseColor("#E0E0E0")));
             btnNext.setTextColor(Color.BLACK);
             btnNext.setText("End");
         }
     }
+    // Machine Problem Review Methods
 
-    private void loadCodingContent() {
+    private void loadMachineProblemContent() {
+        container.removeAllViews();
+
+        // Inflate machine_problem.xml
+        View mpLayout = getLayoutInflater().inflate(R.layout.activity_machine_problem, container, false);
+        container.addView(mpLayout);
+
+        // Hide/Remove submit button and run button (review mode)
+        MaterialButton submitButton = mpLayout.findViewById(R.id.submitButton);
+        MaterialButton runButton = mpLayout.findViewById(R.id.runButton);
+        if (submitButton != null) submitButton.setVisibility(View.GONE);
+        if (runButton != null) runButton.setVisibility(View.GONE);
+
+        // Load exercise data
+        DatabaseReference exerciseRef = FirebaseDatabase.getInstance()
+                .getReference("assessment")
+                .child(lessonId)
+                .child("MachineProblem");
+
+        exerciseRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (!isAdded()) return;
+
+                Exercise exercise = null;
+                for (DataSnapshot child : snapshot.getChildren()) {
+                    Exercise ex = child.getValue(Exercise.class);
+                    if (ex != null) {
+                        exercise = ex;
+                        break;
+                    }
+                }
+
+                if (exercise == null) {
+                    showError("Machine problem not found");
+                    return;
+                }
+
+                final Exercise finalExercise = exercise;
+
+                // Load user answer
+                DatabaseReference userAnswerRef = FirebaseDatabase.getInstance()
+                        .getReference("userMachineProblemAnswers")
+                        .child(String.valueOf(userId))
+                        .child(lessonId);
+
+                userAnswerRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot answerSnapshot) {
+                        if (!isAdded()) return;
+
+                        String userCode = "";
+                        String userOutput = "";
+                        Boolean isCorrect = false;
+
+                        if (answerSnapshot.exists()) {
+                            userCode = answerSnapshot.child("code").getValue(String.class);
+                            userOutput = answerSnapshot.child("output").getValue(String.class);
+                            isCorrect = answerSnapshot.child("isCorrect").getValue(Boolean.class);
+                        }
+
+                        displayMachineProblemReview(mpLayout, finalExercise,
+                                userCode != null ? userCode : "",
+                                userOutput != null ? userOutput : "",
+                                isCorrect != null ? isCorrect : false);
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        if (!isAdded()) return;
+                        showError("Failed to load user answer");
+                    }
+                });
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                if (!isAdded()) return;
+                showError("Failed to load machine problem");
+            }
+        });
+    }
+
+    private void displayMachineProblemReview(View mpLayout, Exercise exercise,
+                                             String userCode, String userOutput, boolean isCorrect) {
+
+        // Find views from the inflated layout
+        TextView exerciseTitle = mpLayout.findViewById(R.id.exerciseTitle);
+        ConstraintLayout header = mpLayout.findViewById(R.id.constraintLayout);
+        header.setVisibility(View.GONE);
+        TextView descriptionBox = mpLayout.findViewById(R.id.descriptionBox);
+        EditText codeEditor = mpLayout.findViewById(R.id.codeEditor);
+        TextView expectedOutputBox = mpLayout.findViewById(R.id.expectedOutputBox);
+        TextView outputBox = mpLayout.findViewById(R.id.outputBox);
+
+        // Set title and description
+        if (exerciseTitle != null) {
+            exerciseTitle.setText(exercise.title);
+        }
+
+        if (descriptionBox != null) {
+            String html = exercise.description.replace("&nbsp;", " ")
+                    .replace("word-break: break-all;", "")
+                    .replace("word-wrap: break-word;", "");
+            descriptionBox.setText(Html.fromHtml(html, Html.FROM_HTML_MODE_LEGACY));
+        }
+
+        // Set expected output
+        if (expectedOutputBox != null) {
+            expectedOutputBox.setText(exercise.expectedOutput);
+        }
+
+        // Make code editor READ-ONLY
+        if (codeEditor != null) {
+            // NEW: Check if user has submitted code
+            if (userCode.isEmpty()) {
+                codeEditor.setText("None - No code submitted yet");
+                codeEditor.setTextColor(Color.parseColor("#999999"));
+            } else {
+                codeEditor.setText(userCode);
+                codeEditor.setTextColor(Color.parseColor("#424242"));
+            }
+
+            codeEditor.setEnabled(false);
+            codeEditor.setFocusable(false);
+            codeEditor.setFocusableInTouchMode(false);
+            codeEditor.setKeyListener(null);
+            codeEditor.setCursorVisible(false);
+            codeEditor.setTextIsSelectable(false);
+            codeEditor.setBackgroundColor(Color.parseColor("#F5F5F5"));
+        }
+
+        // Set user output with color based on correctness
+        if (outputBox != null) {
+            // NEW: Check if user has output
+            if (userOutput.isEmpty()) {
+                outputBox.setText("None - No output yet");
+                outputBox.setTextColor(Color.parseColor("#999999"));
+            } else {
+                outputBox.setText(userOutput);
+                outputBox.setTextColor(isCorrect ?
+                        Color.parseColor("#06651A") : Color.parseColor("#E31414"));
+            }
+        }
+    }
+    // Syntax Error Review Methods
+
+    private void loadSyntaxErrorContent() {
+        container.removeAllViews();
+
+        // Inflate find_syntax_error.xml
+        View syntaxLayout = getLayoutInflater().inflate(R.layout.activity_syntax_error, container, false);
+        container.addView(syntaxLayout);
+
+        // Hide run button and next button initially
+        MaterialButton runButton = syntaxLayout.findViewById(R.id.runButton);
+        MaterialButton nextButton = syntaxLayout.findViewById(R.id.nextCode);
+        if (runButton != null) runButton.setVisibility(View.GONE);
+        if (nextButton != null) nextButton.setVisibility(View.GONE);
+
+        // Load exercises
+        DatabaseReference exerciseRef = FirebaseDatabase.getInstance()
+                .getReference("assessment")
+                .child(lessonId)
+                .child("FindingSyntaxError");
+
+        exerciseRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (!isAdded()) return;
+
+                syntaxExerciseList.clear();
+                for (DataSnapshot child : snapshot.getChildren()) {
+                    Exercise ex = child.getValue(Exercise.class);
+                    if (ex != null) {
+                        syntaxExerciseList.add(ex);
+                    }
+                }
+
+                syntaxExerciseList.removeIf(ex -> ex == null);
+                if (syntaxExerciseList.size() > 2) {
+                    syntaxExerciseList = syntaxExerciseList.subList(0, 2);
+                }
+
+                if (syntaxExerciseList.isEmpty()) {
+                    showError("No syntax error exercises found");
+                    return;
+                }
+
+                // Load user answers
+                loadSyntaxErrorAnswers();
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                if (!isAdded()) return;
+                showError("Failed to load syntax error exercises");
+            }
+        });
+    }
+
+    private void loadSyntaxErrorAnswers() {
+        DatabaseReference answersRef = FirebaseDatabase.getInstance()
+                .getReference("userSyntaxErrorAnswers")
+                .child(String.valueOf(userId))
+                .child(lessonId);
+
+        answersRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (!isAdded()) return;
+
+                syntaxSubmissions.clear();
+                for (DataSnapshot exerciseSnap : snapshot.getChildren()) {
+                    try {
+                        int index = Integer.parseInt(exerciseSnap.getKey());
+                        String code = exerciseSnap.child("code").getValue(String.class);
+                        String output = exerciseSnap.child("output").getValue(String.class);
+                        Boolean isCorrect = exerciseSnap.child("isCorrect").getValue(Boolean.class);
+
+                        if (code != null && output != null && isCorrect != null) {
+                            syntaxSubmissions.put(index,
+                                    new SyntaxSubmission(code, output, isCorrect));
+                        }
+                    } catch (NumberFormatException e) {
+                        Log.e(TAG, "Invalid index: " + exerciseSnap.getKey());
+                    }
+                }
+
+                currentSyntaxIndex = 0;
+                displaySyntaxErrorReview();
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                if (!isAdded()) return;
+                showError("Failed to load user answers");
+            }
+        });
+    }
+
+    private void displaySyntaxErrorReview() {
+        if (currentSyntaxIndex < 0 || currentSyntaxIndex >= syntaxExerciseList.size()) {
+            return;
+        }
+
+        View syntaxView = container.getChildAt(0);
+        if (syntaxView == null) return;
+
+        Exercise exercise = syntaxExerciseList.get(currentSyntaxIndex);
+        SyntaxSubmission submission = syntaxSubmissions.get(currentSyntaxIndex + 1);
+
+        // Find views
+        ConstraintLayout header = syntaxView.findViewById(R.id.constraintLayout);
+        header.setVisibility(View.GONE);
+        TextView exerciseTitle = syntaxView.findViewById(R.id.exerciseTitle);
+        TextView descriptionBox = syntaxView.findViewById(R.id.descriptionBox);
+        EditText codeEditor = syntaxView.findViewById(R.id.codeEditor);
+        TextView expectedOutputBox = syntaxView.findViewById(R.id.expectedOutputBox);
+        TextView outputBox = syntaxView.findViewById(R.id.outputBox);
+        TextView userClass = syntaxView.findViewById(R.id.user_class);
+
+        // Set title and description
+        if (exerciseTitle != null) {
+            exerciseTitle.setText(exercise.title);
+        }
+
+        if (descriptionBox != null) {
+            String html = exercise.description.replace("&nbsp;", " ")
+                    .replace("word-break: break-all;", "")
+                    .replace("word-wrap: break-word;", "");
+            descriptionBox.setText(Html.fromHtml(html, Html.FROM_HTML_MODE_LEGACY));
+        }
+
+        // Set user class/difficulty
+        if (userClass != null && difficulty != null) {
+            userClass.setText(difficulty);
+            userClass.setVisibility(View.VISIBLE);
+        }
+
+        // Set expected output
+        if (expectedOutputBox != null) {
+            expectedOutputBox.setText(exercise.expectedOutput);
+        }
+
+        // Make code editor READ-ONLY
+        if (codeEditor != null) {
+            // NEW: Check if submission exists
+            if (submission != null) {
+                codeEditor.setText(submission.code);
+                codeEditor.setTextColor(Color.parseColor("#424242"));
+            } else {
+                codeEditor.setText("None - No code submitted yet");
+                codeEditor.setTextColor(Color.parseColor("#999999"));
+            }
+
+            codeEditor.setEnabled(false);
+            codeEditor.setFocusable(false);
+            codeEditor.setFocusableInTouchMode(false);
+            codeEditor.setKeyListener(null);
+            codeEditor.setCursorVisible(false);
+            codeEditor.setTextIsSelectable(false);
+            codeEditor.setBackgroundColor(Color.parseColor("#F5F5F5"));
+        }
+
+        // Set user output with color based on correctness
+        if (outputBox != null) {
+            // NEW: Check if submission exists
+            if (submission != null) {
+                outputBox.setText(submission.output);
+                outputBox.setTextColor(submission.isCorrect ?
+                        Color.parseColor("#06651A") : Color.parseColor("#E31414"));
+            } else {
+                outputBox.setText("None - No output yet");
+                outputBox.setTextColor(Color.parseColor("#999999"));
+            }
+        }
+
+        // Setup navigation
+        setupSyntaxErrorNavigation(syntaxView);
+    }
+
+    private void setupSyntaxErrorNavigation(View syntaxView) {
+        ScrollView scrollCoding = syntaxView.findViewById(R.id.scrollCoding);
+        if (scrollCoding != null && scrollCoding.getChildAt(0) instanceof ViewGroup) {
+            ViewGroup mainContainer = (ViewGroup) scrollCoding.getChildAt(0);
+
+            View existingNav = mainContainer.findViewWithTag("nav_buttons");
+            if (existingNav != null) mainContainer.removeView(existingNav);
+
+            SyntaxSubmission submission = syntaxSubmissions.get(currentSyntaxIndex + 1);
+
+            LinearLayout navLayout = new LinearLayout(requireContext());
+            navLayout.setTag("nav_buttons");
+            navLayout.setOrientation(LinearLayout.HORIZONTAL);
+            navLayout.setGravity(android.view.Gravity.CENTER);
+            navLayout.setPadding(16, 8, 16, 16);
+
+            LinearLayout.LayoutParams navParams = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT);
+            navLayout.setLayoutParams(navParams);
+
+            // Previous button
+            MaterialButton prevBtn = new MaterialButton(requireContext());
+            prevBtn.setText("Previous");
+            prevBtn.setEnabled(currentSyntaxIndex > 0);
+
+            LinearLayout.LayoutParams prevBtnParams = new LinearLayout.LayoutParams(
+                    0, ViewGroup.LayoutParams.WRAP_CONTENT);
+            prevBtnParams.weight = 1;
+            prevBtnParams.rightMargin = 8;
+            prevBtn.setLayoutParams(prevBtnParams);
+
+            if (currentSyntaxIndex > 0) {
+                prevBtn.setBackgroundTintList(android.content.res.ColorStateList.valueOf(
+                        ContextCompat.getColor(requireContext(), R.color.primary)));
+                prevBtn.setTextColor(Color.WHITE);
+                prevBtn.setAlpha(1f);
+            } else {
+                prevBtn.setBackgroundTintList(android.content.res.ColorStateList.valueOf(
+                        Color.parseColor("#E0E0E0")));
+                prevBtn.setTextColor(Color.parseColor("#9E9E9E"));
+                prevBtn.setAlpha(0.5f);
+            }
+
+            prevBtn.setOnClickListener(v -> {
+                if (currentSyntaxIndex > 0) {
+                    currentSyntaxIndex--;
+                    displaySyntaxErrorReview();
+                }
+            });
+
+            // Next button
+            MaterialButton nextBtn = new MaterialButton(requireContext());
+            nextBtn.setText(currentSyntaxIndex < syntaxExerciseList.size() - 1 ? "Next" : "End");
+            nextBtn.setEnabled(currentSyntaxIndex < syntaxExerciseList.size() - 1);
+
+            LinearLayout.LayoutParams nextBtnParams = new LinearLayout.LayoutParams(
+                    0, ViewGroup.LayoutParams.WRAP_CONTENT);
+            nextBtnParams.weight = 1;
+            nextBtnParams.leftMargin = 8;
+            nextBtn.setLayoutParams(nextBtnParams);
+
+            if (currentSyntaxIndex < syntaxExerciseList.size() - 1) {
+                nextBtn.setBackgroundTintList(android.content.res.ColorStateList.valueOf(
+                        ContextCompat.getColor(requireContext(), R.color.primary)));
+                nextBtn.setTextColor(Color.WHITE);
+                nextBtn.setAlpha(1f);
+            } else {
+                nextBtn.setBackgroundTintList(android.content.res.ColorStateList.valueOf(
+                        Color.parseColor("#E0E0E0")));
+                nextBtn.setTextColor(Color.parseColor("#9E9E9E"));
+                nextBtn.setAlpha(0.5f);
+            }
+
+            nextBtn.setOnClickListener(v -> {
+                if (currentSyntaxIndex < syntaxExerciseList.size() - 1) {
+                    currentSyntaxIndex++;
+                    displaySyntaxErrorReview();
+                }
+            });
+
+            navLayout.addView(prevBtn);
+            navLayout.addView(nextBtn);
+            mainContainer.addView(navLayout, 1); // Insert at position 1 (after status)
+        }
+    }
+    // Program Tracing Review Methods
+
+    private void loadProgramTracingContent() {
+        container.removeAllViews();
+
+        // Inflate program_tracing.xml
+        View tracingLayout = getLayoutInflater().inflate(R.layout.activity_program_tracing, container, false);
+        container.addView(tracingLayout);
+
+        // Hide check answer and next button initially
+        MaterialButton checkButton = tracingLayout.findViewById(R.id.checkButton);
+        MaterialButton nextButton = tracingLayout.findViewById(R.id.nextTracing);
+        TextView feedbackText = tracingLayout.findViewById(R.id.feedbackText);
+
+        if (checkButton != null) checkButton.setVisibility(View.GONE);
+        if (nextButton != null) nextButton.setVisibility(View.GONE);
+        if (feedbackText != null) feedbackText.setVisibility(View.GONE);
+
+        // Load exercises
+        DatabaseReference exerciseRef = FirebaseDatabase.getInstance()
+                .getReference("assessment")
+                .child(lessonId)
+                .child("ProgramTracing");
+
+        exerciseRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (!isAdded()) return;
+
+                tracingExerciseList.clear();
+                for (DataSnapshot child : snapshot.getChildren()) {
+                    TracingExercise ex = child.getValue(TracingExercise.class);
+                    if (ex != null) {
+                        tracingExerciseList.add(ex);
+                    }
+                }
+
+                tracingExerciseList.removeIf(ex -> ex == null);
+                if (tracingExerciseList.size() > 2) {
+                    tracingExerciseList = tracingExerciseList.subList(0, 2);
+                }
+
+                if (tracingExerciseList.isEmpty()) {
+                    showError("No program tracing exercises found");
+                    return;
+                }
+
+                // Load user answers
+                loadProgramTracingAnswers();
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                if (!isAdded()) return;
+                showError("Failed to load program tracing exercises");
+            }
+        });
+    }
+
+    private void loadProgramTracingAnswers() {
+        DatabaseReference answersRef = FirebaseDatabase.getInstance()
+                .getReference("userTracingAnswers")
+                .child(String.valueOf(userId))
+                .child(lessonId);
+
+        answersRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (!isAdded()) return;
+
+                tracingSubmissions.clear();
+                for (DataSnapshot exerciseSnap : snapshot.getChildren()) {
+                    try {
+                        int index = Integer.parseInt(exerciseSnap.getKey());
+                        String answer = exerciseSnap.child("answer").getValue(String.class);
+                        Boolean isCorrect = exerciseSnap.child("isCorrect").getValue(Boolean.class);
+
+                        if (answer != null && isCorrect != null) {
+                            tracingSubmissions.put(index,
+                                    new TracingAnswerSubmission(answer, isCorrect));
+                        }
+                    } catch (NumberFormatException e) {
+                        Log.e(TAG, "Invalid index: " + exerciseSnap.getKey());
+                    }
+                }
+
+                currentTracingIndex = 0;
+                displayProgramTracingReview();
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                if (!isAdded()) return;
+                showError("Failed to load user answers");
+            }
+        });
+    }
+
+    private void displayProgramTracingReview() {
+        if (currentTracingIndex < 0 || currentTracingIndex >= tracingExerciseList.size()) {
+            return;
+        }
+
+        View tracingView = container.getChildAt(0);
+        if (tracingView == null) return;
+
+        TracingExercise exercise = tracingExerciseList.get(currentTracingIndex);
+        TracingAnswerSubmission submission = tracingSubmissions.get(currentTracingIndex + 1);
+
+        // Find views
+        TextView exerciseTitle = tracingView.findViewById(R.id.exerciseTitle);
+        TextView descriptionBox = tracingView.findViewById(R.id.descriptionBox);
+        TextView codeDisplayText = tracingView.findViewById(R.id.codeDisplay_text);
+        EditText answerInput = tracingView.findViewById(R.id.answerInput);
+        TextView userClass = tracingView.findViewById(R.id.user_class);
+        ConstraintLayout header = tracingView.findViewById(R.id.constraintLayout);
+        header.setVisibility(View.GONE);
+
+        // Set title and description
+        if (exerciseTitle != null) {
+            exerciseTitle.setText(exercise.title);
+        }
+
+        if (descriptionBox != null) {
+            String html = exercise.description.replace("&nbsp;", " ")
+                    .replace("word-break: break-all;", "")
+                    .replace("word-wrap: break-word;", "");
+            descriptionBox.setText(Html.fromHtml(html, Html.FROM_HTML_MODE_LEGACY));
+        }
+
+        // Set user class/difficulty
+        if (userClass != null && difficulty != null) {
+            userClass.setText(difficulty);
+            userClass.setVisibility(View.VISIBLE);
+        }
+
+        // Set code display (already read-only as TextView)
+        if (codeDisplayText != null) {
+            String formattedCode = exercise.code
+                    .replace("&nbsp;", " ")
+                    .replace("&emsp;", "\t")
+                    .replace("<br>", "\n");
+            codeDisplayText.setText(formattedCode);
+        }
+
+        // Make answer input READ-ONLY and show submission status
+        if (answerInput != null) {
+            // NEW: Check if submission exists
+            if (submission != null) {
+                answerInput.setText(submission.answer);
+                answerInput.setTextColor(submission.isCorrect ?
+                        Color.parseColor("#06651A") : Color.parseColor("#E31414"));
+                answerInput.setHint(""); // Clear hint if there's an answer
+            } else {
+                answerInput.setText(""); // Keep empty
+                answerInput.setHint("None - No answer submitted yet");
+                answerInput.setHintTextColor(Color.parseColor("#999999"));
+                answerInput.setTextColor(Color.parseColor("#999999"));
+            }
+
+            answerInput.setEnabled(false);
+            answerInput.setFocusable(false);
+            answerInput.setFocusableInTouchMode(false);
+            answerInput.setKeyListener(null);
+            answerInput.setCursorVisible(false);
+            answerInput.setTextIsSelectable(false);
+            answerInput.setBackgroundColor(Color.parseColor("#F5F5F5"));
+        }
+
+        // Setup navigation and display expected output
+        setupProgramTracingNavigation(tracingView, exercise, submission);
+    }
+
+    private void setupProgramTracingNavigation(View tracingView, TracingExercise exercise,
+                                               TracingAnswerSubmission submission) {
+        ScrollView scrollTracing = tracingView.findViewById(R.id.scrollTracing);
+        if (scrollTracing != null && scrollTracing.getChildAt(0) instanceof ViewGroup) {
+            ViewGroup mainContainer = (ViewGroup) scrollTracing.getChildAt(0);
+
+            View existingNav = mainContainer.findViewWithTag("nav_buttons");
+            if (existingNav != null) mainContainer.removeView(existingNav);
+
+            // Add Expected Output Section
+            LinearLayout expectedSection = new LinearLayout(requireContext());
+            expectedSection.setTag("expected_output_section");
+            expectedSection.setOrientation(LinearLayout.VERTICAL);
+            expectedSection.setPadding(16, 16, 16, 0);
+
+            // Add navigation buttons
+            LinearLayout navLayout = new LinearLayout(requireContext());
+            navLayout.setTag("nav_buttons");
+            navLayout.setOrientation(LinearLayout.HORIZONTAL);
+            navLayout.setGravity(android.view.Gravity.CENTER);
+            navLayout.setPadding(16, 16, 16, 24);
+
+            LinearLayout.LayoutParams navParams = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT);
+            navLayout.setLayoutParams(navParams);
+
+            // Previous button
+            MaterialButton prevBtn = new MaterialButton(requireContext());
+            prevBtn.setText("Previous");
+            prevBtn.setEnabled(currentTracingIndex > 0);
+
+            LinearLayout.LayoutParams prevBtnParams = new LinearLayout.LayoutParams(
+                    0, ViewGroup.LayoutParams.WRAP_CONTENT);
+            prevBtnParams.weight = 1;
+            prevBtnParams.rightMargin = 8;
+            prevBtn.setLayoutParams(prevBtnParams);
+
+            if (currentTracingIndex > 0) {
+                prevBtn.setBackgroundTintList(android.content.res.ColorStateList.valueOf(
+                        ContextCompat.getColor(requireContext(), R.color.primary)));
+                prevBtn.setTextColor(Color.WHITE);
+                prevBtn.setAlpha(1f);
+            } else {
+                prevBtn.setBackgroundTintList(android.content.res.ColorStateList.valueOf(
+                        Color.parseColor("#E0E0E0")));
+                prevBtn.setTextColor(Color.parseColor("#9E9E9E"));
+                prevBtn.setAlpha(0.5f);
+            }
+
+            prevBtn.setOnClickListener(v -> {
+                if (currentTracingIndex > 0) {
+                    currentTracingIndex--;
+                    displayProgramTracingReview();
+                }
+            });
+
+            // Next button
+            MaterialButton nextBtn = new MaterialButton(requireContext());
+            nextBtn.setText(currentTracingIndex < tracingExerciseList.size() - 1 ? "Next" : "End");
+            nextBtn.setEnabled(currentTracingIndex < tracingExerciseList.size() - 1);
+
+            LinearLayout.LayoutParams nextBtnParams = new LinearLayout.LayoutParams(
+                    0, ViewGroup.LayoutParams.WRAP_CONTENT);
+            nextBtnParams.weight = 1;
+            nextBtnParams.leftMargin = 8;
+            nextBtn.setLayoutParams(nextBtnParams);
+
+            if (currentTracingIndex < tracingExerciseList.size() - 1) {
+                nextBtn.setBackgroundTintList(android.content.res.ColorStateList.valueOf(
+                        ContextCompat.getColor(requireContext(), R.color.primary)));
+                nextBtn.setTextColor(Color.WHITE);
+                nextBtn.setAlpha(1f);
+            } else {
+                nextBtn.setBackgroundTintList(android.content.res.ColorStateList.valueOf(
+                        Color.parseColor("#E0E0E0")));
+                nextBtn.setTextColor(Color.parseColor("#9E9E9E"));
+                nextBtn.setAlpha(0.5f);
+            }
+
+            nextBtn.setOnClickListener(v -> {
+                if (currentTracingIndex < tracingExerciseList.size() - 1) {
+                    currentTracingIndex++;
+                    displayProgramTracingReview();
+                }
+            });
+
+            navLayout.addView(prevBtn);
+            navLayout.addView(nextBtn);
+            mainContainer.addView(navLayout);
+        }
+    }
+    // Helper Methods
+
+    private void showPlaceholder(String title, String message) {
         container.removeAllViews();
 
         TextView placeholder = new TextView(requireContext());
-        placeholder.setText("Coding Exercise Review\n\nComing soon...");
+        placeholder.setText(title + "\n\n" + message);
         placeholder.setPadding(32, 32, 32, 32);
         placeholder.setTextSize(16);
         placeholder.setTextColor(ContextCompat.getColor(requireContext(), R.color.secondary));
+        placeholder.setGravity(android.view.Gravity.CENTER);
         container.addView(placeholder);
     }
 
@@ -525,7 +1412,50 @@ public class ReviewDisplayFragment extends Fragment {
         TextView error = new TextView(requireContext());
         error.setText("Error: " + message);
         error.setPadding(32, 32, 32, 32);
+        error.setTextSize(16);
         error.setTextColor(Color.RED);
+        error.setGravity(android.view.Gravity.CENTER);
         container.addView(error);
     }
+
+    // Helper Classes
+
+    public static class SyntaxSubmission {
+        public String code;
+        public String output;
+        public boolean isCorrect;
+
+        public SyntaxSubmission() {}
+
+        public SyntaxSubmission(String code, String output, boolean isCorrect) {
+            this.code = code;
+            this.output = output;
+            this.isCorrect = isCorrect;
+        }
+    }
+
+    public static class TracingAnswerSubmission {
+        public String answer;
+        public boolean isCorrect;
+
+        public TracingAnswerSubmission() {}
+
+        public TracingAnswerSubmission(String answer, boolean isCorrect) {
+            this.answer = answer;
+            this.isCorrect = isCorrect;
+        }
+    }
+
+    public static class TracingExercise {
+        public String title;
+        public String description;
+        public String code;
+        public String expectedOutput;
+        public String language;
+        public String versionIndex;
+
+        public TracingExercise() {}
+    }
 }
+
+// End of ReviewDisplayFragment class

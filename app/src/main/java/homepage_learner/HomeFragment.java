@@ -18,7 +18,6 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -37,20 +36,37 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 public class HomeFragment extends Fragment {
 
     private LinearLayout currentLearner, scoreHistoryContainer;
     private CardView newLearner;
-    private DatabaseReference dbRefAct, userRef;
+    private DatabaseReference dbRefAct, userRef, dbRefRecentLesson;
     private SessionManager sessionManager;
 
-    private TextView userName, userClass;
+    private TextView userName, userClass, greetName;
     private ImageView avatar;
     private ValueEventListener userListener;
     private FrameLayout nextLessonContainer;
     private DatabaseReference lessonsRef, quizResultsRef, exerciseResultsRef, codingExercisesRef;
+
+    private int userId = -1;
+    private String cachedUserData = null;
+    private String cachedNextLesson = null;
+    private int cachedScoreCount = -1;
+
+    // Store lesson data for sorting
+    private static class LessonData {
+        String key, title, desc, difficulty;
+        boolean isCompleted;
+    }
 
     public HomeFragment() {}
 
@@ -63,7 +79,7 @@ public class HomeFragment extends Fragment {
 
         nextLessonContainer = view.findViewById(R.id.nextLessonContainer);
 
-// Initialize Firebase references for lessons
+        // Initialize Firebase references for lessons
         lessonsRef = FirebaseDatabase.getInstance().getReference("Lessons");
         quizResultsRef = FirebaseDatabase.getInstance().getReference("quizResults");
         exerciseResultsRef = FirebaseDatabase.getInstance().getReference("exerciseResults");
@@ -73,7 +89,7 @@ public class HomeFragment extends Fragment {
         userName = view.findViewById(R.id.user_name);
         userClass = view.findViewById(R.id.user_class);
         avatar = view.findViewById(R.id.logout);
-        TextView greetName = view.findViewById(R.id.learner_name);
+        greetName = view.findViewById(R.id.learner_name);
 
         // ---------- SCORE VIEWS ----------
         currentLearner = view.findViewById(R.id.current_learner);
@@ -85,6 +101,7 @@ public class HomeFragment extends Fragment {
 
         // ---------- FIREBASE REFERENCES ----------
         dbRefAct = FirebaseDatabase.getInstance().getReference("RecentAct");
+        dbRefRecentLesson = FirebaseDatabase.getInstance().getReference("RecentLesson");
 
         // ---------- NEW LEARNER BUTTON ----------
         newLearner.setOnClickListener(v -> {
@@ -99,22 +116,87 @@ public class HomeFragment extends Fragment {
             getParentFragmentManager().setFragmentResult("openLearnFragmentRequest", result);
         });
 
-        if (sessionManager.isLoggedIn()) {
-            int userId = sessionManager.getUserId();
-            Log.d("HomeFragment", "Logged in user ID: " + userId);
+        // Get userId
+        userId = sessionManager.getUserId();
 
-            if (userId != -1) {
-                userRef = FirebaseDatabase.getInstance().getReference("Users").child(String.valueOf(userId));
-                attachUserListener(greetName);
-                attachScoreListener(userId);
-            } else {
-                showNewLearner();
+        // Initial load
+        loadFragmentData();
+
+        return view;
+    }
+
+    /**
+     * Called when fragment becomes visible - reload all data
+     */
+    public void onFragmentVisible() {
+        Log.d("HomeFragment", "Fragment is now visible - checking for changes");
+
+        if (sessionManager.isLoggedIn() && userId != -1) {
+            checkAndReloadIfNeeded();
+        }
+    }
+
+    private void checkAndReloadIfNeeded() {
+        // Check user data changes
+        userRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                String currentUserData = snapshot.child("firstName").getValue(String.class) +
+                        snapshot.child("classification").getValue(String.class);
+
+                if (!currentUserData.equals(cachedUserData)) {
+                    cachedUserData = currentUserData;
+                    loadFragmentData();
+                } else {
+                    Log.d("HomeFragment", "No user data changes detected");
+                }
             }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {}
+        });
+
+        // Check lesson progress changes
+        dbRefRecentLesson.child(String.valueOf(userId))
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        long currentLessonCount = snapshot.getChildrenCount();
+
+                        if (cachedNextLesson == null || currentLessonCount != cachedScoreCount) {
+                            cachedScoreCount = (int) currentLessonCount;
+                            loadNextLesson(userId);
+                        } else {
+                            Log.d("HomeFragment", "No lesson progress changes detected");
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {}
+                });
+    }
+
+    /**
+     * Load or reload all fragment data
+     */
+    private void loadFragmentData() {
+        if (sessionManager.isLoggedIn() && userId != -1) {
+            Log.d("HomeFragment", "Loading data for user ID: " + userId);
+
+            // Detach old listener if exists
+            if (userRef != null && userListener != null) {
+                userRef.removeEventListener(userListener);
+            }
+
+            // Reattach user listener
+            userRef = FirebaseDatabase.getInstance().getReference("Users").child(String.valueOf(userId));
+            attachUserListener(greetName);
+
+            // Reload score data and lessons
+            attachScoreListener(userId);
         } else {
             showNewLearner();
         }
-
-        return view;
     }
 
     private void loadNextLesson(int userId) {
@@ -132,12 +214,25 @@ public class HomeFragment extends Fragment {
                                 lessonsRef.addListenerForSingleValueEvent(new ValueEventListener() {
                                     @Override
                                     public void onDataChange(@NonNull DataSnapshot lessonsSnapshot) {
-                                        String nextLessonId = findNextUnlockedLesson(lessonsSnapshot, quizSnapshot, exerciseSnapshot, codingSnapshot);
+                                        // Check if user has ANY lesson progress
+                                        boolean hasProgress = hasAnyLessonProgress(quizSnapshot, exerciseSnapshot);
 
-                                        if (nextLessonId != null) {
+                                        if (!hasProgress) {
+                                            // No progress at all - show new learner card only
+                                            currentLearner.setVisibility(View.GONE);
+                                            return;
+                                        }
+
+                                        // Build lesson map for processing
+                                        Map<String, List<LessonData>> lessonsByDiff = buildLessonMap(lessonsSnapshot, quizSnapshot, exerciseSnapshot, codingSnapshot);
+
+                                        String nextLessonId = findNextUnlockedLesson(lessonsByDiff, quizSnapshot, exerciseSnapshot, codingSnapshot);
+
+                                        if (nextLessonId != null && !nextLessonId.equals("L1")) {
+                                            // Display next lesson only if it's not L1
                                             displayNextLesson(lessonsSnapshot.child(nextLessonId), nextLessonId, quizSnapshot, exerciseSnapshot, codingSnapshot);
                                         } else {
-                                            // No next lesson found - hide continue learning section
+                                            // Next lesson is L1 or null - hide continue learning section
                                             currentLearner.setVisibility(View.GONE);
                                         }
                                     }
@@ -164,61 +259,195 @@ public class HomeFragment extends Fragment {
         });
     }
 
-    private String findNextUnlockedLesson(DataSnapshot lessonsSnapshot, DataSnapshot quizSnapshot,
-                                          DataSnapshot exerciseSnapshot, DataSnapshot codingSnapshot) {
-        // Start from L1 and check each lesson sequentially
-        for (int i = 1; i <= 50; i++) { // Adjust max number based on your lesson count
-            String lessonId = "L" + i;
+    /**
+     * Build a map of lessons organized by difficulty with completion status
+     */
+    private Map<String, List<LessonData>> buildLessonMap(DataSnapshot lessonsSnapshot,
+                                                         DataSnapshot quizSnapshot,
+                                                         DataSnapshot exerciseSnapshot,
+                                                         DataSnapshot codingSnapshot) {
+        Map<String, List<LessonData>> lessonsByDiff = new HashMap<>();
 
-            if (!lessonsSnapshot.child(lessonId).exists()) {
-                continue; // Skip if lesson doesn't exist
+        for (DataSnapshot lessonSnap : lessonsSnapshot.getChildren()) {
+            String lessonKey = lessonSnap.getKey();
+            String titleHtml = lessonSnap.child("main_title").getValue(String.class);
+            String descHtml = lessonSnap.child("title_desc").getValue(String.class);
+            String difficulty = lessonSnap.child("difficulty").getValue(String.class);
+
+            if (difficulty == null) difficulty = "beginner";
+            if (titleHtml == null) titleHtml = lessonKey;
+            if (descHtml == null) descHtml = "No description available";
+
+            // Check completion
+            boolean isCompleted = isLessonCompleted(lessonKey, quizSnapshot, exerciseSnapshot, codingSnapshot);
+
+            LessonData data = new LessonData();
+            data.key = lessonKey;
+            data.title = titleHtml;
+            data.desc = descHtml;
+            data.difficulty = difficulty;
+            data.isCompleted = isCompleted;
+
+            lessonsByDiff.computeIfAbsent(difficulty.toLowerCase(), k -> new ArrayList<>()).add(data);
+        }
+
+        // Sort lessons within each difficulty by lesson number
+        for (List<LessonData> lessons : lessonsByDiff.values()) {
+            Collections.sort(lessons, new Comparator<LessonData>() {
+                @Override
+                public int compare(LessonData l1, LessonData l2) {
+                    try {
+                        int num1 = Integer.parseInt(l1.key.replaceAll("[^0-9]", ""));
+                        int num2 = Integer.parseInt(l2.key.replaceAll("[^0-9]", ""));
+                        return Integer.compare(num1, num2);
+                    } catch (NumberFormatException e) {
+                        return l1.key.compareTo(l2.key);
+                    }
+                }
+            });
+        }
+
+        return lessonsByDiff;
+    }
+
+    /**
+     * Find the next unlocked lesson based on LearnFragment logic
+     */
+    private String findNextUnlockedLesson(Map<String, List<LessonData>> lessonsByDiff,
+                                          DataSnapshot quizSnapshot,
+                                          DataSnapshot exerciseSnapshot,
+                                          DataSnapshot codingSnapshot) {
+        // Check beginner lessons first
+        String nextBeginner = findNextInDifficulty(lessonsByDiff.get("beginner"), quizSnapshot, exerciseSnapshot, codingSnapshot, null);
+        if (nextBeginner != null) {
+            return nextBeginner;
+        }
+
+        // All beginner completed - check if intermediate is unlocked
+        List<LessonData> beginnerLessons = lessonsByDiff.get("beginner");
+        boolean allBeginnerCompleted = areAllLessonsCompleted(beginnerLessons, quizSnapshot, exerciseSnapshot, codingSnapshot);
+
+        if (allBeginnerCompleted) {
+            String nextIntermediate = findNextInDifficulty(lessonsByDiff.get("intermediate"), quizSnapshot, exerciseSnapshot, codingSnapshot, null);
+            if (nextIntermediate != null) {
+                return nextIntermediate;
             }
 
-            // Check if this lesson is locked
-            if (lessonId.equals("L1")) {
-                // L1 is always available
-                // Check if L1 is completed
-                if (!isLessonCompleted(lessonId, quizSnapshot, exerciseSnapshot, codingSnapshot)) {
-                    return lessonId;
-                }
-            } else {
-                // Check previous lesson
-                String prevLessonId = "L" + (i - 1);
+            // All intermediate completed - check if advanced is unlocked
+            List<LessonData> intermediateLessons = lessonsByDiff.get("intermediate");
+            boolean allIntermediateCompleted = areAllLessonsCompleted(intermediateLessons, quizSnapshot, exerciseSnapshot, codingSnapshot);
 
-                // If previous lesson is completed, this is the next one
-                if (isLessonCompleted(prevLessonId, quizSnapshot, exerciseSnapshot, codingSnapshot)) {
-                    // Check if current lesson is not completed
-                    if (!isLessonCompleted(lessonId, quizSnapshot, exerciseSnapshot, codingSnapshot)) {
-                        return lessonId;
-                    }
+            if (allIntermediateCompleted) {
+                String nextAdvanced = findNextInDifficulty(lessonsByDiff.get("advanced"), quizSnapshot, exerciseSnapshot, codingSnapshot, null);
+                if (nextAdvanced != null) {
+                    return nextAdvanced;
                 }
             }
         }
 
-        return null; // All lessons completed
+        // All lessons completed
+        return null;
+    }
+
+    /**
+     * Find the next incomplete lesson within a difficulty level
+     */
+    private String findNextInDifficulty(List<LessonData> lessons,
+                                        DataSnapshot quizSnapshot,
+                                        DataSnapshot exerciseSnapshot,
+                                        DataSnapshot codingSnapshot,
+                                        String previousLessonId) {
+        if (lessons == null || lessons.isEmpty()) return null;
+
+        for (int i = 0; i < lessons.size(); i++) {
+            LessonData lesson = lessons.get(i);
+
+            // If this is the first lesson (L1 or first in level), it's always unlocked
+            if (i == 0) {
+                if (!lesson.isCompleted) {
+                    return lesson.key;
+                }
+                continue;
+            }
+
+            // Check if previous lesson is completed
+            LessonData previousLesson = lessons.get(i - 1);
+            boolean previousCompleted = isLessonCompleted(previousLesson.key, quizSnapshot, exerciseSnapshot, codingSnapshot);
+
+            // If previous lesson is completed but current is not, this is the next lesson
+            if (previousCompleted && !lesson.isCompleted) {
+                return lesson.key;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Check if all lessons in a difficulty level are completed
+     */
+    private boolean areAllLessonsCompleted(List<LessonData> lessons,
+                                           DataSnapshot quizSnapshot,
+                                           DataSnapshot exerciseSnapshot,
+                                           DataSnapshot codingSnapshot) {
+        if (lessons == null || lessons.isEmpty()) return false;
+
+        for (LessonData lesson : lessons) {
+            if (!isLessonCompleted(lesson.key, quizSnapshot, exerciseSnapshot, codingSnapshot)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private boolean hasAnyLessonProgress(DataSnapshot quizSnapshot, DataSnapshot exerciseSnapshot) {
+        if (quizSnapshot.exists() && quizSnapshot.hasChildren()) {
+            for (DataSnapshot lesson : quizSnapshot.getChildren()) {
+                String passed = lesson.child("passed").getValue(String.class);
+                if (passed != null && passed.equalsIgnoreCase("Passed")) {
+                    return true;
+                }
+            }
+        }
+
+        if (exerciseSnapshot.exists() && exerciseSnapshot.hasChildren()) {
+            for (DataSnapshot lesson : exerciseSnapshot.getChildren()) {
+                Boolean completed = lesson.child("completed").getValue(Boolean.class);
+                if (completed != null && completed) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     private boolean isLessonCompleted(String lessonId, DataSnapshot quizSnapshot,
                                       DataSnapshot exerciseSnapshot, DataSnapshot codingSnapshot) {
-        // Check quiz completion
+        // Step 1: Check if quiz is passed
         boolean quizPassed = false;
         if (quizSnapshot.child(lessonId).exists()) {
             String passed = quizSnapshot.child(lessonId).child("passed").getValue(String.class);
             quizPassed = passed != null && passed.equalsIgnoreCase("Passed");
         }
 
-        if (!quizPassed) return false;
+        // If quiz not passed, lesson is not completed
+        if (!quizPassed) {
+            return false;
+        }
 
-        // Check if lesson has coding exercises
+        // Step 2: Check if lesson has coding exercises
         boolean hasCodingExercises = codingSnapshot.child(lessonId).exists()
                 && codingSnapshot.child(lessonId).hasChildren();
 
+        // Step 3: If has exercises, check if they're completed
         if (hasCodingExercises) {
             Boolean exerciseCompleted = exerciseSnapshot.child(lessonId).child("completed").getValue(Boolean.class);
             return exerciseCompleted != null && exerciseCompleted;
         }
 
-        // Quiz passed and no exercises, so completed
+        // No exercises required, quiz passed = lesson completed
         return true;
     }
 
@@ -250,7 +479,6 @@ public class HomeFragment extends Fragment {
         lTitle.setText(Html.fromHtml(truncatedTitle, Html.FROM_HTML_MODE_LEGACY));
         lAbout.setText(Html.fromHtml(truncatedDesc, Html.FROM_HTML_MODE_LEGACY));
 
-        // Set difficulty badge and card color
         switch (difficulty.toLowerCase()) {
             case "beginner":
                 diffBadge.setImageResource(R.drawable.beginner_classifier);
@@ -268,10 +496,8 @@ public class HomeFragment extends Fragment {
                 break;
         }
 
-        // Set progress icon (should be gray since it's not completed)
         lProgress.setColorFilter(getResources().getColor(R.color.gray), PorterDuff.Mode.SRC_IN);
 
-        // Set click listener to open lesson
         card.setOnClickListener(v -> {
             sessionManager.saveSelectedLesson(lessonId);
             Intent intent = new Intent(requireContext(), com.example.codex.LessonActivity.class);
@@ -281,6 +507,8 @@ public class HomeFragment extends Fragment {
 
         nextLessonContainer.addView(lessonView);
         currentLearner.setVisibility(View.VISIBLE);
+
+        Log.d("HomeFragment", "Displayed next lesson: " + lessonId);
     }
 
     private String truncateText(String text, int maxLength) {
@@ -295,7 +523,7 @@ public class HomeFragment extends Fragment {
         userListener = new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                if (!snapshot.exists()) return;
+                if (!snapshot.exists() || !isAdded()) return;
 
                 String firstName = snapshot.child("firstName").getValue(String.class);
                 String lastName = snapshot.child("lastName").getValue(String.class);
@@ -335,24 +563,51 @@ public class HomeFragment extends Fragment {
     private void attachScoreListener(int userId) {
         Log.d("HomeFragment", "Listening for RecentAct userId: " + userId);
 
-        // Load next lesson
         loadNextLesson(userId);
+
+        dbRefRecentLesson.child(String.valueOf(userId))
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot recentLessonSnapshot) {
+                        if (!isAdded()) return;
+
+                        boolean hasProgress = recentLessonSnapshot.exists() && recentLessonSnapshot.getChildrenCount() > 0;
+
+                        if (hasProgress) {
+                            // Immediately show continue learning card
+                            currentLearner.setVisibility(View.VISIBLE);
+                            newLearner.setVisibility(View.GONE);
+
+                            // Load next lesson asynchronously (no UI freeze)
+                            loadNextLesson(userId);
+                        } else {
+                            // Immediately show new learner card
+                            currentLearner.setVisibility(View.GONE);
+                            newLearner.setVisibility(View.VISIBLE);
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {}
+                });
+
 
         dbRefAct.child(String.valueOf(userId))
                 .addValueEventListener(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        if (!isAdded()) return;
+
                         Log.d("HomeFragment", "Score Snapshot Exists: " + snapshot.exists() +
                                 " | Children: " + snapshot.getChildrenCount());
 
                         if (!snapshot.exists() || snapshot.getChildrenCount() == 0) {
                             Log.w("HomeFragment", "No RecentAct data found for user " + userId);
-                            hideAllSections();
-                            showNewLearner();
+                            scoreHistoryContainer.setVisibility(View.GONE);
                             return;
                         }
 
-                        showCurrentLearner();
+                        scoreHistoryContainer.setVisibility(View.VISIBLE);
                         loadScoreHistory(snapshot);
                     }
 
@@ -394,7 +649,6 @@ public class HomeFragment extends Fragment {
 
     @SuppressLint("InflateParams")
     private void showLogoutDialog() {
-
         LayoutInflater inflater = requireActivity().getLayoutInflater();
         View dialogView = inflater.inflate(R.layout.dialog_ready_to_join, null);
 
@@ -414,12 +668,10 @@ public class HomeFragment extends Fragment {
         );
         dialog.getWindow().setDimAmount(0.6f);
 
-        // ----- TITLE WITH GRADIENT -----
         TextView title = dialogView.findViewById(R.id.dialog_title);
         title.setText("Are you sure you want to log out?");
         GradientTextUtil.applyGradient(title, "#03162A", "#0A4B90");
 
-        // ----- MESSAGE (optional, if your layout has dialog_message) -----
         TextView dialogMessage = dialogView.findViewById(R.id.dialog_message);
         if (dialogMessage != null) {
             String html = "<b><font color='#09417D'>Are you sure</font></b> you want to "
@@ -427,7 +679,6 @@ public class HomeFragment extends Fragment {
             dialogMessage.setText(Html.fromHtml(html, Html.FROM_HTML_MODE_LEGACY));
         }
 
-        // ----- BUTTONS -----
         MaterialButton btnNo = dialogView.findViewById(R.id.no_btn);
         MaterialButton btnYes = dialogView.findViewById(R.id.yes_btn);
 
@@ -448,39 +699,18 @@ public class HomeFragment extends Fragment {
 
         btnYes.setOnClickListener(v -> {
             dialog.dismiss();
-
-            sessionManager.logout(); // Clears session + sets loggedOutFlag
-
-            // Ensure old prefs removed:
+            sessionManager.logout();
             SharedPreferences prefs = requireActivity().getSharedPreferences("MyAppPrefs", Context.MODE_PRIVATE);
             prefs.edit().clear().apply();
-
             Intent intent = new Intent(requireActivity(), MainActivity.class);
             startActivity(intent);
-
             requireActivity().finish();
         });
-
     }
-
-
-    private void showCurrentLearner() {
-        currentLearner.setVisibility(View.VISIBLE);
-        scoreHistoryContainer.setVisibility(View.VISIBLE);
-        newLearner.setVisibility(View.GONE);  // ✅ hide new learner card
-    }
-
 
     private void showNewLearner() {
         currentLearner.setVisibility(View.GONE);
-        scoreHistoryContainer.setVisibility(View.GONE);
         newLearner.setVisibility(View.VISIBLE);
-    }
-
-    private void hideAllSections() {
-        currentLearner.setVisibility(View.GONE);
-        scoreHistoryContainer.setVisibility(View.GONE);
-        newLearner.setVisibility(View.GONE);
     }
 
     @Override

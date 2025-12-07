@@ -10,7 +10,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
-
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -31,6 +30,11 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+
 public class ReviewFragment extends Fragment {
 
     private static final String TAG = "ReviewFragment";
@@ -41,17 +45,65 @@ public class ReviewFragment extends Fragment {
     private String mParam2;
     private LinearLayout lessonsContainer;
     private DatabaseReference lessonsRef;
+    private DatabaseReference assessmentRef;
 
-    // 🔥 NEW: quiz + exercise result references
+    // User answer references
+    private DatabaseReference machineProblemAnswersRef;
+    private DatabaseReference syntaxErrorAnswersRef;
+    private DatabaseReference programTracingAnswersRef;
     private DatabaseReference quizResultsRef;
-    private DatabaseReference exerciseResultsRef;
 
     private SessionManager sessionManager;
 
     private MaterialButton btnBeginner, btnIntermediate, btnAdvanced;
-    private String currentFilter = "Beginner"; // Default filter
+    private String cachedData = null;
+    private String currentFilter = "All";
+
+    // Cache all lesson data after first load
+    private List<LessonData> allLessonsCache = new ArrayList<>();
+    private boolean isDataLoaded = false;
 
     public ReviewFragment() {}
+
+    public void onFragmentVisible() {
+        Log.d("ReviewFragment", "Fragment is now visible - checking for changes");
+        checkAndReloadIfNeeded();
+    }
+
+    private void checkAndReloadIfNeeded() {
+        int userId = sessionManager.getUserId();
+        String userIdString = String.valueOf(userId);
+
+        // Check for any changes in user answers
+        machineProblemAnswersRef.child(userIdString)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        String newHash = generateHash(snapshot);
+                        if (!newHash.equals(cachedData)) {
+                            cachedData = newHash;
+                            Log.d("ReviewFragment", "Changes detected - reloading lessons");
+                            isDataLoaded = false; // Force reload
+                            loadLessons();
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        Log.e(TAG, "Check cancelled: " + error.getMessage());
+                    }
+                });
+    }
+
+    private String generateHash(DataSnapshot snapshot) {
+        StringBuilder hash = new StringBuilder();
+        hash.append(snapshot.getChildrenCount()).append("_");
+        for (DataSnapshot child : snapshot.getChildren()) {
+            hash.append(child.getKey()).append(":");
+            hash.append(child.getChildrenCount()).append("|");
+        }
+        return hash.toString();
+    }
 
     public static ReviewFragment newInstance(String param1, String param2) {
         ReviewFragment fragment = new ReviewFragment();
@@ -72,13 +124,17 @@ public class ReviewFragment extends Fragment {
 
         sessionManager = new SessionManager(requireContext());
         lessonsRef = FirebaseDatabase.getInstance().getReference("Lessons");
+        assessmentRef = FirebaseDatabase.getInstance().getReference("assessment");
 
-        // 🔥 Get user ID for filtering quiz/exercise results
-        int userId = sessionManager.getUserId();
-        String userIdString = String.valueOf(userId);
+        machineProblemAnswersRef = FirebaseDatabase.getInstance()
+                .getReference("userMachineProblemAnswers");
+        syntaxErrorAnswersRef = FirebaseDatabase.getInstance()
+                .getReference("userSyntaxErrorAnswers");
+        programTracingAnswersRef = FirebaseDatabase.getInstance()
+                .getReference("userProgramTracingAnswers");
+        quizResultsRef = FirebaseDatabase.getInstance()
+                .getReference("quizResults");
 
-        quizResultsRef = FirebaseDatabase.getInstance().getReference("quizResults").child(userIdString);
-        exerciseResultsRef = FirebaseDatabase.getInstance().getReference("exerciseResults").child(userIdString);
     }
 
     @Override
@@ -93,10 +149,7 @@ public class ReviewFragment extends Fragment {
         btnIntermediate = view.findViewById(R.id.intermediate);
         btnAdvanced = view.findViewById(R.id.advanced);
 
-        String savedDifficulty = sessionManager.getLessonDifficulty();
-        if (savedDifficulty != null && !savedDifficulty.isEmpty()) {
-            currentFilter = savedDifficulty;
-        }
+        currentFilter = "All";
 
         setupFilterButtons();
         updateButtonStates();
@@ -107,24 +160,36 @@ public class ReviewFragment extends Fragment {
 
     private void setupFilterButtons() {
         btnBeginner.setOnClickListener(v -> {
-            currentFilter = "Beginner";
+            if (currentFilter.equals("Beginner")) {
+                currentFilter = "All";
+            } else {
+                currentFilter = "Beginner";
+            }
             sessionManager.saveLessonDifficulty(currentFilter);
             updateButtonStates();
-            loadLessons();
+            filterAndDisplayLessons();
         });
 
         btnIntermediate.setOnClickListener(v -> {
-            currentFilter = "Intermediate";
+            if (currentFilter.equals("Intermediate")) {
+                currentFilter = "All";
+            } else {
+                currentFilter = "Intermediate";
+            }
             sessionManager.saveLessonDifficulty(currentFilter);
             updateButtonStates();
-            loadLessons();
+            filterAndDisplayLessons();
         });
 
         btnAdvanced.setOnClickListener(v -> {
-            currentFilter = "Advanced";
+            if (currentFilter.equals("Advanced")) {
+                currentFilter = "All";
+            } else {
+                currentFilter = "Advanced";
+            }
             sessionManager.saveLessonDifficulty(currentFilter);
             updateButtonStates();
-            loadLessons();
+            filterAndDisplayLessons();
         });
     }
 
@@ -133,25 +198,27 @@ public class ReviewFragment extends Fragment {
         resetButton(btnIntermediate);
         resetButton(btnAdvanced);
 
-        MaterialButton selectedButton;
+        if (!currentFilter.equals("All")) {
+            MaterialButton selectedButton;
 
-        switch (currentFilter) {
-            case "Beginner":
-                selectedButton = btnBeginner;
-                break;
-            case "Intermediate":
-                selectedButton = btnIntermediate;
-                break;
-            case "Advanced":
-                selectedButton = btnAdvanced;
-                break;
-            default:
-                selectedButton = btnBeginner;
+            switch (currentFilter) {
+                case "Beginner":
+                    selectedButton = btnBeginner;
+                    break;
+                case "Intermediate":
+                    selectedButton = btnIntermediate;
+                    break;
+                case "Advanced":
+                    selectedButton = btnAdvanced;
+                    break;
+                default:
+                    return;
+            }
+
+            selectedButton.setBackgroundColor(Color.parseColor("#03162A"));
+            selectedButton.setTextColor(getResources().getColor(android.R.color.white, null));
+            selectedButton.setStrokeColor(ColorStateList.valueOf(Color.parseColor("#03162A")));
         }
-
-        selectedButton.setBackgroundColor(Color.parseColor("#03162A"));
-        selectedButton.setTextColor(getResources().getColor(android.R.color.white, null));
-        selectedButton.setStrokeColor(ColorStateList.valueOf(Color.parseColor("#03162A")));
     }
 
     private void resetButton(MaterialButton button) {
@@ -160,94 +227,204 @@ public class ReviewFragment extends Fragment {
         button.setStrokeColorResource(android.R.color.holo_blue_light);
     }
 
-    // ====================================================================================
-    // 🔥 THIS IS WHERE THE FILTERING MAGIC HAPPENS
-    // ====================================================================================
     private void loadLessons() {
-        lessonsRef.addListenerForSingleValueEvent(new ValueEventListener() {
+        if (isDataLoaded) {
+            filterAndDisplayLessons();
+            return;
+        }
+
+        int userId = sessionManager.getUserId();
+        String userIdString = String.valueOf(userId);
+
+        lessonsContainer.removeAllViews();
+        TextView loadingText = new TextView(getContext());
+        loadingText.setText("Loading lessons...");
+        loadingText.setTextSize(16);
+        loadingText.setPadding(32, 32, 32, 32);
+        loadingText.setGravity(android.view.Gravity.CENTER);
+        lessonsContainer.addView(loadingText);
+
+        final DataSnapshot[] allSnapshots = new DataSnapshot[6];
+        final int[] loadedCount = {0};
+        final int totalLoads = 6;
+
+        ValueEventListener loadListener = new ValueEventListener() {
             @Override
-            public void onDataChange(@NonNull DataSnapshot lessonsSnapshot) {
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                synchronized (loadedCount) {
+                    loadedCount[0]++;
 
-                lessonsContainer.removeAllViews();
-
-                quizResultsRef.addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot quizSnapshot) {
-
-                        exerciseResultsRef.addListenerForSingleValueEvent(new ValueEventListener() {
-                            @Override
-                            public void onDataChange(@NonNull DataSnapshot exerciseSnapshot) {
-
-                                int lessonCount = 0;
-
-                                for (DataSnapshot lessonSnapshot : lessonsSnapshot.getChildren()) {
-
-                                    String lessonId = lessonSnapshot.getKey();
-                                    String mainTitle = lessonSnapshot.child("main_title").getValue(String.class);
-                                    String difficulty = lessonSnapshot.child("difficulty").getValue(String.class);
-                                    String titleDesc = lessonSnapshot.child("title_desc").getValue(String.class);
-
-                                    // 🔥 Difficulty filter first
-                                    if (difficulty == null || !difficulty.equalsIgnoreCase(currentFilter)) {
-                                        continue;
-                                    }
-
-                                    // 🔥 Check if user finished quiz
-                                    boolean hasQuiz = quizSnapshot.hasChild(lessonId);
-
-                                    // 🔥 Check if user finished exercise
-                                    boolean hasExercise = false;
-                                    if (exerciseSnapshot.hasChild(lessonId)) {
-                                        Boolean completed = exerciseSnapshot.child(lessonId)
-                                                .child("completed")
-                                                .getValue(Boolean.class);
-                                        hasExercise = completed != null && completed;
-                                    }
-
-                                    // 🔥 Skip if user has NOT done quiz or exercise
-                                    if (!hasQuiz && !hasExercise) {
-                                        continue;
-                                    }
-
-                                    // 🟦 User completed something → show lesson card
-                                    View lessonCard = createLessonCard(lessonId, mainTitle, difficulty, titleDesc);
-                                    lessonsContainer.addView(lessonCard);
-                                    lessonCount++;
-                                }
-
-                                if (lessonCount == 0) {
-                                    TextView noLessons = new TextView(getContext());
-                                    noLessons.setText("No completed lessons found for " + currentFilter);
-                                    noLessons.setTextSize(16);
-                                    noLessons.setPadding(32, 32, 32, 32);
-                                    noLessons.setTextColor(getResources().getColor(android.R.color.darker_gray, null));
-                                    lessonsContainer.addView(noLessons);
-                                }
-                            }
-
-                            @Override
-                            public void onCancelled(@NonNull DatabaseError error) {}
-                        });
+                    if (snapshot.getRef().equals(lessonsRef)) {
+                        allSnapshots[0] = snapshot;
+                    } else if (snapshot.getRef().equals(assessmentRef)) {
+                        allSnapshots[1] = snapshot;
+                    } else if (snapshot.getRef().getParent().equals(machineProblemAnswersRef)) {
+                        allSnapshots[2] = snapshot;
+                    } else if (snapshot.getRef().getParent().equals(syntaxErrorAnswersRef)) {
+                        allSnapshots[3] = snapshot;
+                    } else if (snapshot.getRef().getParent().equals(programTracingAnswersRef)) {
+                        allSnapshots[4] = snapshot;
+                    } else if (snapshot.getRef().getParent().equals(quizResultsRef)) {
+                        allSnapshots[5] = snapshot;
                     }
 
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError error) {}
-                });
+                    if (loadedCount[0] == totalLoads) {
+                        processLessons(allSnapshots[0], allSnapshots[1],
+                                allSnapshots[2], allSnapshots[3], allSnapshots[4], allSnapshots[5]);
+                        isDataLoaded = true;
+                    }
+                }
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                Log.e(TAG, "Database error: " + error.getMessage());
-                Toast.makeText(getContext(), "Error loading lessons", Toast.LENGTH_SHORT).show();
+                Log.e(TAG, "Load error: " + error.getMessage());
+                Toast.makeText(getContext(), "Error loading data", Toast.LENGTH_SHORT).show();
             }
-        });
+        };
+
+        lessonsRef.addListenerForSingleValueEvent(loadListener);
+        assessmentRef.addListenerForSingleValueEvent(loadListener);
+        machineProblemAnswersRef.child(userIdString).addListenerForSingleValueEvent(loadListener);
+        syntaxErrorAnswersRef.child(userIdString).addListenerForSingleValueEvent(loadListener);
+        programTracingAnswersRef.child(userIdString).addListenerForSingleValueEvent(loadListener);
+        quizResultsRef.child(userIdString).addListenerForSingleValueEvent(loadListener);
     }
 
-    // ====================================================================================
+    private void filterAndDisplayLessons() {
+        lessonsContainer.removeAllViews();
 
-    private View createLessonCard(String lessonId, String mainTitle, String difficulty, String titleDesc) {
+        List<LessonData> filteredLessons = new ArrayList<>();
 
-        View cardView = LayoutInflater.from(getContext()).inflate(R.layout.review_quizcode, lessonsContainer, false);
+        for (LessonData lessonData : allLessonsCache) {
+            if (currentFilter.equals("All") ||
+                    (lessonData.difficulty != null && lessonData.difficulty.equalsIgnoreCase(currentFilter))) {
+                filteredLessons.add(lessonData);
+            }
+        }
+
+        for (LessonData lessonData : filteredLessons) {
+            View lessonCard = createLessonCard(
+                    lessonData.lessonId,
+                    lessonData.mainTitle,
+                    lessonData.difficulty,
+                    lessonData.titleDesc,
+                    lessonData.totalAssessments,
+                    lessonData.assessmentPercent
+            );
+            lessonsContainer.addView(lessonCard);
+        }
+
+        if (filteredLessons.isEmpty()) {
+            TextView noLessons = new TextView(getContext());
+            String filterText = currentFilter.equals("All") ? "any difficulty" : currentFilter;
+            noLessons.setText("No lessons found for " + filterText);
+            noLessons.setTextSize(16);
+            noLessons.setPadding(32, 32, 32, 32);
+            noLessons.setTextColor(getResources().getColor(android.R.color.darker_gray, null));
+            lessonsContainer.addView(noLessons);
+        }
+    }
+
+    private void processLessons(DataSnapshot lessonsSnapshot, DataSnapshot assessmentSnapshot,
+                                DataSnapshot mpSnapshot, DataSnapshot seSnapshot,
+                                DataSnapshot ptSnapshot, DataSnapshot quizSnapshot) {
+
+        allLessonsCache.clear();
+
+        for (DataSnapshot lessonSnapshot : lessonsSnapshot.getChildren()) {
+            String lessonId = lessonSnapshot.getKey();
+            String mainTitle = lessonSnapshot.child("main_title").getValue(String.class);
+            String difficulty = lessonSnapshot.child("difficulty").getValue(String.class);
+            String titleDesc = lessonSnapshot.child("title_desc").getValue(String.class);
+
+            Long orderLong = lessonSnapshot.child("order").getValue(Long.class);
+            int lessonOrder = orderLong != null ? orderLong.intValue() : 999;
+
+            DataSnapshot lessonAssessment = assessmentSnapshot.child(lessonId);
+            int totalAssessments = 0;
+            int completedAssessments = 0;
+
+            if (lessonAssessment.hasChild("MachineProblem")) {
+                totalAssessments++;
+                if (mpSnapshot.hasChild(lessonId) &&
+                        mpSnapshot.child(lessonId).getChildrenCount() > 0) {
+                    completedAssessments++;
+                }
+            }
+
+            if (lessonAssessment.hasChild("FindingSyntaxError")) {
+                totalAssessments++;
+                if (seSnapshot.hasChild(lessonId) &&
+                        seSnapshot.child(lessonId).getChildrenCount() > 0) {
+                    completedAssessments++;
+                }
+            }
+
+            if (lessonAssessment.hasChild("ProgramTracing")) {
+                totalAssessments++;
+                if (ptSnapshot.hasChild(lessonId) &&
+                        ptSnapshot.child(lessonId).getChildrenCount() > 0) {
+                    completedAssessments++;
+                }
+            }
+
+            if (lessonAssessment.hasChild("Quiz")) {
+                totalAssessments++;
+                if (quizSnapshot.hasChild(lessonId)) {
+                    completedAssessments++;
+                }
+            }
+
+            int assessmentPercent = totalAssessments > 0
+                    ? (completedAssessments * 100) / totalAssessments
+                    : 0;
+
+            allLessonsCache.add(new LessonData(
+                    lessonId, mainTitle, difficulty, titleDesc,
+                    totalAssessments, assessmentPercent, lessonOrder
+            ));
+        }
+
+        Collections.sort(allLessonsCache, new Comparator<LessonData>() {
+            @Override
+            public int compare(LessonData l1, LessonData l2) {
+                if (l1.assessmentPercent != l2.assessmentPercent) {
+                    return Integer.compare(l2.assessmentPercent, l1.assessmentPercent);
+                }
+                return Integer.compare(l1.lessonOrder, l2.lessonOrder);
+            }
+        });
+
+        filterAndDisplayLessons();
+    }
+
+    private static class LessonData {
+        String lessonId;
+        String mainTitle;
+        String difficulty;
+        String titleDesc;
+        int totalAssessments;
+        int assessmentPercent;
+        int lessonOrder;
+
+        LessonData(String lessonId, String mainTitle, String difficulty, String titleDesc,
+                   int totalAssessments, int assessmentPercent, int lessonOrder) {
+            this.lessonId = lessonId;
+            this.mainTitle = mainTitle;
+            this.difficulty = difficulty;
+            this.titleDesc = titleDesc;
+            this.totalAssessments = totalAssessments;
+            this.assessmentPercent = assessmentPercent;
+            this.lessonOrder = lessonOrder;
+        }
+    }
+
+    private View createLessonCard(String lessonId, String mainTitle, String difficulty,
+                                  String titleDesc, int totalAssessments, int assessmentPercent) {
+
+        View cardView = LayoutInflater.from(getContext()).inflate(
+                R.layout.review_quizcode, lessonsContainer, false);
 
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
@@ -261,15 +438,19 @@ public class ReviewFragment extends Fragment {
 
         TextView titleTextView = cardView.findViewById(R.id.l_title);
         ImageView difficultyImageView = cardView.findViewById(R.id.difficulty);
-        MaterialCardView percentStroke = cardView.findViewById(R.id.percentStroke);
         TextView dateTextView = cardView.findViewById(R.id.date);
-        TextView progressTextView = cardView.findViewById(R.id.progressPercent);
+        TextView assessmentPercentText = cardView.findViewById(R.id.assessment_percent);
+        MaterialCardView assessmentCard = cardView.findViewById(R.id.assessment);
         View sideBar = cardView.findViewById(R.id.view3);
         MaterialCardView lessonCard = cardView.findViewById(R.id.lesson_card);
 
         if (mainTitle != null) {
             titleTextView.setText(Html.fromHtml(mainTitle, Html.FROM_HTML_MODE_COMPACT));
         }
+
+        dateTextView.setText("Assessment (" + totalAssessments + ")");
+        assessmentPercentText.setText(assessmentPercent + "%");
+        assessmentCard.setVisibility(View.VISIBLE);
 
         if (difficulty != null) {
             switch (difficulty.toLowerCase()) {
@@ -278,29 +459,26 @@ public class ReviewFragment extends Fragment {
                     break;
                 case "intermediate":
                     difficultyImageView.setImageResource(R.drawable.intermediate_classifier);
-                    titleTextView.setTextColor(Color.parseColor("#A666F4"));
-                    dateTextView.setTextColor(Color.parseColor("#A666F4"));
-                    progressTextView.setTextColor(Color.parseColor("#A666F4"));
-                    percentStroke.setStrokeColor(Color.parseColor("#A666F4"));
-                    sideBar.setBackgroundColor(Color.parseColor("#A666F4"));
-                    lessonCard.setStrokeColor(Color.parseColor("#A666F4"));
+                    titleTextView.setTextColor(Color.parseColor("#66ABF4"));
+                    dateTextView.setTextColor(Color.parseColor("#66ABF4"));
+                    assessmentPercentText.setTextColor(Color.parseColor("#66ABF4"));
+                    assessmentCard.setStrokeColor(Color.parseColor("#66ABF4"));
+                    sideBar.setBackgroundColor(Color.parseColor("#66ABF4"));
+                    lessonCard.setStrokeColor(Color.parseColor("#66ABF4"));
                     break;
                 case "advanced":
                     difficultyImageView.setImageResource(R.drawable.advanced_classifier);
-                    titleTextView.setTextColor(Color.parseColor("#66ABF4"));
-                    dateTextView.setTextColor(Color.parseColor("#66ABF4"));
-                    progressTextView.setTextColor(Color.parseColor("#66ABF4"));
-                    percentStroke.setStrokeColor(Color.parseColor("#66ABF4"));
-                    sideBar.setBackgroundColor(Color.parseColor("#66ABF4"));
-                    lessonCard.setStrokeColor(Color.parseColor("#66ABF4"));
+                    titleTextView.setTextColor(Color.parseColor("#A666F4"));
+                    dateTextView.setTextColor(Color.parseColor("#A666F4"));
+                    assessmentPercentText.setTextColor(Color.parseColor("#A666F4"));
+                    assessmentCard.setStrokeColor(Color.parseColor("#A666F4"));
+                    sideBar.setBackgroundColor(Color.parseColor("#A666F4"));
+                    lessonCard.setStrokeColor(Color.parseColor("#A666F4"));
                     break;
                 default:
                     difficultyImageView.setImageResource(R.drawable.beginner_classifier);
             }
         }
-
-        dateTextView.setText("MM/DD/YYYY");
-        progressTextView.setText("0%");
 
         actualCard.setOnClickListener(v -> {
             sessionManager.saveSelectedLesson(lessonId);
@@ -317,7 +495,6 @@ public class ReviewFragment extends Fragment {
 
             FragmentManager fragmentManager = requireActivity().getSupportFragmentManager();
 
-            // 🔥 Create the fullscreen overlay ABOVE bottom navigation
             int containerId = createFullscreenContainer();
 
             FragmentTransaction transaction = fragmentManager.beginTransaction();
@@ -328,18 +505,16 @@ public class ReviewFragment extends Fragment {
                     android.R.anim.slide_out_right
             );
 
-            // Load review fragment into the overlay
             transaction.replace(containerId, reviewDisplayFragment);
             transaction.addToBackStack("ReviewDisplay");
             transaction.commit();
 
         } catch (Exception e) {
             e.printStackTrace();
-            Toast.makeText(getContext(), "Error opening review: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            Toast.makeText(getContext(), "Error opening review: " + e.getMessage(),
+                    Toast.LENGTH_LONG).show();
         }
     }
-
-
 
     private int createFullscreenContainer() {
         FrameLayout container = new FrameLayout(requireContext());
@@ -351,44 +526,19 @@ public class ReviewFragment extends Fragment {
                 ViewGroup.LayoutParams.MATCH_PARENT
         ));
 
-        // Add to the Activity root (always ABOVE everything else)
         ((ViewGroup) requireActivity()
                 .findViewById(android.R.id.content))
                 .addView(container);
 
         return generatedId;
     }
-    private int findFragmentContainerId() {
-        String[] possibleIds = {
-                "fragment_container",
-                "main_container",
-                "content_frame",
-                "container",
-                "nav_host_fragment",
-                "fragment_holder",
-                "main_fragment_container"
-        };
-
-        for (String idName : possibleIds) {
-            int id = getResources().getIdentifier(idName, "id", requireContext().getPackageName());
-            if (id != 0) {
-                try {
-                    View container = requireActivity().findViewById(id);
-                    if (container != null) return id;
-                } catch (Exception ignored) {}
-            }
-        }
-
-        if (getView() != null && getView().getParent() instanceof View) {
-            return ((View) getView().getParent()).getId();
-        }
-
-        return -1;
-    }
 
     @Override
     public void onResume() {
         super.onResume();
         sessionManager.clearSelectedLesson();
+        if (isDataLoaded) {
+            checkAndReloadIfNeeded();
+        }
     }
 }

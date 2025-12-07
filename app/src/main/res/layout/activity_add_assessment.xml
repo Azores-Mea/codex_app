@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FFFFFF"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center_horizontal">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Add Assessment"
+            android:textColor="#000000"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="20dp" />
+
+        <!-- Lesson ID -->
+        <EditText
+            android:id="@+id/inputLessonId"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Lesson ID (e.g., L1)"
+            android:padding="12dp"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Assessment Type Spinner (Quiz or Code) -->
+        <Spinner
+            android:id="@+id/spinnerAssessmentType"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="12dp"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Code Type Spinner (only visible when Code is selected) -->
+        <Spinner
+            android:id="@+id/spinnerCodeType"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="12dp"
+            android:visibility="gone"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Quiz Fields Layout -->
+        <LinearLayout
+            android:id="@+id/layoutQuizFields"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <EditText
+                android:id="@+id/inputQuestion"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Enter question"
+                android:padding="12dp"
+                android:inputType="textMultiLine"
+                android:minLines="2"
+                android:layout_marginBottom="12dp" />
+
+            <EditText
+                android:id="@+id/inputChoiceA"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Choice A"
+                android:padding="12dp"
+                android:inputType="textMultiLine"
+                android:layout_marginBottom="12dp" />
+
+            <EditText
+                android:id="@+id/inputChoiceB"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Choice B"
+                android:padding="12dp"
+                android:inputType="textMultiLine"
+                android:layout_marginBottom="12dp" />
+
+            <EditText
+                android:id="@+id/inputChoiceC"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Choice C"
+                android:padding="12dp"
+                android:inputType="textMultiLine"
+                android:layout_marginBottom="12dp" />
+
+            <EditText
+                android:id="@+id/inputChoiceD"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Choice D"
+                android:padding="12dp"
+                android:inputType="textMultiLine"
+                android:layout_marginBottom="12dp" />
+
+            <EditText
+                android:id="@+id/inputCorrectAnswer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Correct Answer (A/B/C/D)"
+                android:padding="12dp"
+                android:layout_marginBottom="12dp" />
+
+        </LinearLayout>
+
+        <!-- Code Fields Layout -->
+        <LinearLayout
+            android:id="@+id/layoutCodeFields"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <EditText
+                android:id="@+id/inputTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Title"
+                android:padding="12dp"
+                android:layout_marginBottom="12dp" />
+
+            <EditText
+                android:id="@+id/inputDescription"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Description/Instructions"
+                android:padding="12dp"
+                android:inputType="textMultiLine"
+                android:minLines="2"
+                android:layout_marginBottom="12dp" />
+
+            <EditText
+                android:id="@+id/inputCode"
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:hint="Enter code here"
+                android:inputType="textMultiLine|textNoSuggestions"
+                android:gravity="top|start"
+                android:scrollbars="vertical"
+                android:background="#F2F2F2"
+                android:padding="12dp"
+                android:fontFamily="monospace"
+                android:textSize="14sp"
+                android:layout_marginBottom="12dp" />
+
+            <EditText
+                android:id="@+id/inputExpectedOutput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Expected Output"
+                android:padding="12dp"
+                android:inputType="textMultiLine|textNoSuggestions"
+                android:minLines="2"
+                android:layout_marginBottom="12dp" />
+
+        </LinearLayout>
+
+        <!-- Save Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSaveAssessment"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Save Assessment"
+            android:textColor="@android:color/white"
+            android:textStyle="bold"
+            android:padding="12dp"
+            android:textSize="18sp"
+            android:layout_marginTop="16dp" />
+
+    </LinearLayout>
+</ScrollView>

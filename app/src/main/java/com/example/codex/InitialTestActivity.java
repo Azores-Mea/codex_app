@@ -31,6 +31,7 @@ import com.google.firebase.database.ValueEventListener;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -151,15 +152,21 @@ public class InitialTestActivity extends AppCompatActivity {
     private HashMap<String, String> lessonTitles = new HashMap<>();
 
     private void loadQuestionsFromFirebase() {
-        // First, load lesson titles from Lessons node
+        // Load ALL lessons (L1, L2, L3, etc.) to get their difficulties and titles
         DatabaseReference lessonsRef = FirebaseDatabase.getInstance().getReference("Lessons");
         lessonsRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
+                HashMap<String, String> lessonDifficulties = new HashMap<>();
+                List<String> lessonIds = new ArrayList<>();
+
                 for (DataSnapshot lessonSnap : snapshot.getChildren()) {
                     String lessonId = lessonSnap.getKey();
 
-                    // Try to get main_title from content node
+                    // Get difficulty
+                    String difficulty = lessonSnap.child("difficulty").getValue(String.class);
+
+                    // Get main_title from content node
                     DataSnapshot contentSnap = lessonSnap.child("content");
                     String mainTitle = null;
 
@@ -172,117 +179,184 @@ public class InitialTestActivity extends AppCompatActivity {
                         mainTitle = lessonSnap.child("main_title").getValue(String.class);
                     }
 
+                    if (lessonId != null && difficulty != null) {
+                        lessonDifficulties.put(lessonId, difficulty);
+                        lessonIds.add(lessonId);
+                        Log.d("InitialTestActivity", "Loaded lesson: " + lessonId + " -> " + difficulty);
+                    }
+
                     if (lessonId != null && mainTitle != null) {
-                        // Remove HTML tags if present
                         String cleanTitle = mainTitle.replaceAll("<[^>]*>", "").trim();
                         lessonTitles.put(lessonId, cleanTitle);
-                        Log.d("InitialTestActivity", "Loaded lesson: " + lessonId + " -> " + cleanTitle);
-                    } else {
-                        Log.w("InitialTestActivity", "No title found for lesson: " + lessonId);
+                        Log.d("InitialTestActivity", "Loaded lesson title: " + lessonId + " -> " + cleanTitle);
                     }
                 }
 
-                Log.d("InitialTestActivity", "Total lesson titles loaded: " + lessonTitles.size());
+                Log.d("InitialTestActivity", "Total lessons loaded: " + lessonIds.size());
 
-                // After loading titles, load questions
-                loadQuestions();
+                // After loading all lesson data, load questions from all modules
+                loadQuestionsFromAllModules(lessonIds, lessonDifficulties);
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                Log.e("InitialTestActivity", "Failed to load lesson titles", error.toException());
-                // Continue loading questions even if titles fail
-                loadQuestions();
+                Log.e("InitialTestActivity", "Failed to load lesson data", error.toException());
+                Toast.makeText(InitialTestActivity.this, "Failed to load lesson data", Toast.LENGTH_SHORT).show();
             }
         });
     }
 
-    private void loadQuestions() {
-        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("quizQuestions");
 
-        ref.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                List<HashMap<String, String>> beginnerList = new ArrayList<>();
-                List<HashMap<String, String>> intermediateList = new ArrayList<>();
-                List<HashMap<String, String>> advancedList = new ArrayList<>();
+    private void loadQuestionsFromAllModules(List<String> lessonIds, HashMap<String, String> lessonDifficulties) {
+        List<HashMap<String, String>> beginnerList = new ArrayList<>();
+        List<HashMap<String, String>> intermediateList = new ArrayList<>();
+        List<HashMap<String, String>> advancedList = new ArrayList<>();
 
-                for (DataSnapshot levelSnap : snapshot.getChildren()) {
-                    String classification = levelSnap.getKey();
+        // Counter to track completion
+        final int[] completedLoads = {0};
+        final int totalLoads = lessonIds.size();
 
-                    for (DataSnapshot lessonSnap : levelSnap.getChildren()) {
-                        String lessonId = lessonSnap.getKey();
+        if (totalLoads == 0) {
+            Toast.makeText(InitialTestActivity.this, "No lessons found.", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
-                        for (DataSnapshot questionSnap : lessonSnap.getChildren()) {
+        // Load questions from each module
+        for (String lessonId : lessonIds) {
+            DatabaseReference quizRef = FirebaseDatabase.getInstance()
+                    .getReference("assessment")
+                    .child(lessonId)
+                    .child("Quiz");
+
+            quizRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    String difficulty = lessonDifficulties.get(lessonId);
+
+                    for (DataSnapshot questionSnap : snapshot.getChildren()) {
+                        String questionId = questionSnap.getKey();
+
+                        // Extract all question data
+                        String question = questionSnap.child("question").getValue(String.class);
+                        String choiceA = questionSnap.child("choiceA").getValue(String.class);
+                        String choiceB = questionSnap.child("choiceB").getValue(String.class);
+                        String choiceC = questionSnap.child("choiceC").getValue(String.class);
+                        String choiceD = questionSnap.child("choiceD").getValue(String.class);
+                        String answer = questionSnap.child("answer").getValue(String.class);
+
+                        if (question != null && answer != null) {
                             HashMap<String, String> q = new HashMap<>();
-                            q.put("question", questionSnap.child("question").getValue(String.class));
-                            q.put("choiceA", questionSnap.child("choiceA").getValue(String.class));
-                            q.put("choiceB", questionSnap.child("choiceB").getValue(String.class));
-                            q.put("choiceC", questionSnap.child("choiceC").getValue(String.class));
-                            q.put("choiceD", questionSnap.child("choiceD").getValue(String.class));
-                            q.put("correctAnswer", questionSnap.child("answer").getValue(String.class));
-                            q.put("classification", classification);
+                            q.put("question", question);
+                            q.put("choiceA", choiceA != null ? choiceA : "");
+                            q.put("choiceB", choiceB != null ? choiceB : "");
+                            q.put("choiceC", choiceC != null ? choiceC : "");
+                            q.put("choiceD", choiceD != null ? choiceD : "");
+                            q.put("correctAnswer", answer);
                             q.put("lessonId", lessonId);
+                            q.put("questionId", questionId);
 
-                            switch (classification) {
-                                case "Beginner":
-                                    beginnerList.add(q);
-                                    break;
-                                case "Intermediate":
-                                    intermediateList.add(q);
-                                    break;
-                                case "Advanced":
-                                    advancedList.add(q);
-                                    break;
+                            // Classify based on lesson difficulty
+                            if (difficulty != null) {
+                                q.put("classification", difficulty);
+
+                                switch (difficulty) {
+                                    case "Beginner":
+                                        synchronized (beginnerList) {
+                                            beginnerList.add(q);
+                                        }
+                                        break;
+                                    case "Intermediate":
+                                        synchronized (intermediateList) {
+                                            intermediateList.add(q);
+                                        }
+                                        break;
+                                    case "Advanced":
+                                        synchronized (advancedList) {
+                                            advancedList.add(q);
+                                        }
+                                        break;
+                                    default:
+                                        Log.w("InitialTestActivity", "Unknown difficulty: " + difficulty);
+                                        break;
+                                }
                             }
                         }
                     }
+
+                    Log.d("InitialTestActivity", "Loaded " + snapshot.getChildrenCount() +
+                            " questions from " + lessonId + " (" + difficulty + ")");
+
+                    // Check if all modules have been loaded
+                    completedLoads[0]++;
+                    if (completedLoads[0] == totalLoads) {
+                        finalizeQuestionSelection(beginnerList, intermediateList, advancedList);
+                    }
                 }
 
-                // NEW DISTRIBUTION: 10 Beginner (25%), 10 Intermediate (35%), 10 Advanced (40%)
-                int beginnerCount = 10;
-                int intermediateCount = 10;
-                int advancedCount = 10;
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {
+                    Log.e("InitialTestActivity", "Failed to load questions from " + lessonId, error.toException());
 
-                questionList.clear();
-                questionList.addAll(getRandomSubset(beginnerList, beginnerCount));
-                questionList.addAll(getRandomSubset(intermediateList, intermediateCount));
-                questionList.addAll(getRandomSubset(advancedList, advancedCount));
-
-                if (!questionList.isEmpty()) {
-                    currentIndex = 0;
-                    loadQuestion(0);
-                } else {
-                    Toast.makeText(InitialTestActivity.this, "No questions available.", Toast.LENGTH_SHORT).show();
+                    // Still check completion even on error
+                    completedLoads[0]++;
+                    if (completedLoads[0] == totalLoads) {
+                        finalizeQuestionSelection(beginnerList, intermediateList, advancedList);
+                    }
                 }
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                Toast.makeText(InitialTestActivity.this, "Failed to load questions", Toast.LENGTH_SHORT).show();
-            }
-        });
+            });
+        }
     }
 
-    private List<HashMap<String, String>> getRandomSubset(List<HashMap<String, String>> list, int count) {
-        List<HashMap<String, String>> copy = new ArrayList<>(list);
+    private void finalizeQuestionSelection(List<HashMap<String, String>> beginnerList,
+                                           List<HashMap<String, String>> intermediateList,
+                                           List<HashMap<String, String>> advancedList) {
+
+        // Distribution: 10 Beginner, 10 Intermediate, 10 Advanced
+        int beginnerCount = 10;
+        int intermediateCount = 10;
+        int advancedCount = 10;
+
+        questionList.clear();
+        questionList.addAll(getRandomSubset(beginnerList, beginnerCount));
+        questionList.addAll(getRandomSubset(intermediateList, intermediateCount));
+        questionList.addAll(getRandomSubset(advancedList, advancedCount));
+
+        if (!questionList.isEmpty()) {
+            currentIndex = 0;
+            loadQuestion(0);
+        } else {
+            Toast.makeText(InitialTestActivity.this, "No questions available.", Toast.LENGTH_SHORT).show();
+        }
+    }
+    private List<HashMap<String, String>> getRandomSubset(List<HashMap<String, String>> source, int count) {
         List<HashMap<String, String>> result = new ArrayList<>();
+
+        if (source == null || source.isEmpty()) {
+            return result;
+        }
+
+        // If we have fewer items than requested, return all items
+        if (source.size() <= count) {
+            result.addAll(source);
+            return result;
+        }
+
+        // Create a copy to avoid modifying the original list
+        List<HashMap<String, String>> copy = new ArrayList<>(source);
+
+        // Shuffle and take the first 'count' items
         java.util.Collections.shuffle(copy);
-        for (int i = 0; i < Math.min(count, copy.size()); i++) {
+
+        for (int i = 0; i < count && i < copy.size(); i++) {
             result.add(copy.get(i));
         }
+
         return result;
     }
 
     private void loadQuestion(int index) {
         currentIndex = index;
 
-        if (questionList == null || questionList.isEmpty() || index < 0 || index >= questionList.size()) {
-            Log.w("InitialTestActivity", "loadQuestion called with invalid index: " + index);
-            return;
-        }
-
-        // Record when this question was first displayed
         if (!questionStartTimes.containsKey(index)) {
             questionStartTimes.put(index, System.currentTimeMillis());
         }
@@ -415,7 +489,6 @@ public class InitialTestActivity extends AppCompatActivity {
         HashMap<String, Integer> lessonScores = new HashMap<>();
         HashMap<String, Integer> lessonTotals = new HashMap<>();
 
-        // Track time spent per difficulty level
         long beginnerTotalTime = 0;
         long intermediateTotalTime = 0;
         long advancedTotalTime = 0;
@@ -479,7 +552,7 @@ public class InitialTestActivity extends AppCompatActivity {
             }
         }
 
-        // Calculate average time per question for each difficulty level (in seconds)
+        // Calculate average time per question for each difficulty level
         double beginnerAvgTimeSecs = beginnerTotal > 0 ? (beginnerTotalTime / 1000.0 / beginnerTotal) : 0;
         double intermediateAvgTimeSecs = intermediateTotal > 0 ? (intermediateTotalTime / 1000.0 / intermediateTotal) : 0;
         double advancedAvgTimeSecs = advancedTotal > 0 ? (advancedTotalTime / 1000.0 / advancedTotal) : 0;
@@ -489,7 +562,7 @@ public class InitialTestActivity extends AppCompatActivity {
         double intermediateRawPercentage = intermediateTotal > 0 ? (intermediateScore * 100.0 / intermediateTotal) : 0;
         double advancedRawPercentage = advancedTotal > 0 ? (advancedScore * 100.0 / advancedTotal) : 0;
 
-        // Apply time-based penalty per difficulty level based on AVERAGE time
+        // Apply time-based penalty per difficulty level
         double beginnerAdjustedPercentage = beginnerRawPercentage;
         if (beginnerAvgTimeSecs < 5.0) {
             beginnerAdjustedPercentage *= 0.90; // Reduce by 10%
@@ -649,31 +722,28 @@ public class InitialTestActivity extends AppCompatActivity {
         String timeSpentFormatted = formatMillisToMinutesSeconds(timeSpentMillis);
 
         HashMap<String, Object> resultData = new HashMap<>();
-        resultData.put("userId", userId);
-        resultData.put("lessonId", "ITest1");
-        resultData.put("quizType", "InitialTest");
-        resultData.put("answers", answersList);
-        resultData.put("score", score);
-        resultData.put("total", totalQuestions);
         resultData.put("classification", classification);
         resultData.put("weightedGWA", weightedGWA);
-        resultData.put("avgTimePerQuestion", avgTimePerQuestion);
         resultData.put("beginnerScore", scoreDetails.get("beginnerScore"));
-        resultData.put("beginnerTotal", scoreDetails.get("beginnerTotal"));
         resultData.put("intermediateScore", scoreDetails.get("intermediateScore"));
-        resultData.put("intermediateTotal", scoreDetails.get("intermediateTotal"));
         resultData.put("advancedScore", scoreDetails.get("advancedScore"));
-        resultData.put("advancedTotal", scoreDetails.get("advancedTotal"));
         resultData.put("weakAreas", weakAreas);
         resultData.put("passed", passed);
         resultData.put("timestamp", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date()));
         resultData.put("timeFinishedAt", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date(timeFinishedAt)));
         resultData.put("timeSpentMillis", timeSpentMillis);
         resultData.put("timeSpentFormatted", timeSpentFormatted);
+        resultData.put("userId", userId);
+        resultData.put("lessonId", "ITest1");
+        resultData.put("quizType", "InitialTest");
+        resultData.put("answers", answersList);
+        resultData.put("score", score);
+        resultData.put("total", totalQuestions);resultData.put("advancedTotal", scoreDetails.get("advancedTotal"));
+        resultData.put("beginnerTotal", scoreDetails.get("beginnerTotal"));resultData.put("intermediateTotal", scoreDetails.get("intermediateTotal"));
+        resultData.put("avgTimePerQuestion", avgTimePerQuestion);
 
         FirebaseDatabase.getInstance().getReference("quizResults").push().setValue(resultData)
                 .addOnSuccessListener(aVoid -> {
-                    Toast.makeText(this, "Quiz submitted successfully!", Toast.LENGTH_SHORT).show();
                     updateUserClassification(classification);
                     saveRecentActivity(score, totalQuestions, timeSpentMillis, timeSpentFormatted);
                     showFinalConfirmationDialog(score, totalQuestions, classification, weightedGWA, timeSpentFormatted, weakAreas);

@@ -11,6 +11,7 @@
         android:orientation="vertical"
         tools:layout_editor_absoluteX="1dp"
         tools:layout_editor_absoluteY="1dp"
+        android:background="@color/white"
         tools:ignore="MissingConstraints">
 
         <TextView

@@ -36,6 +36,7 @@ public class GoogleSignInHandler {
     private GoogleSignInClient googleSignInClient;
 
     private OnGoogleSignInListener listener;
+    private boolean isRegistrationFlow = false;
 
     public interface OnGoogleSignInListener {
         void onSignInSuccess(boolean isNewUser, String email, String firstName, String lastName);
@@ -63,7 +64,21 @@ public class GoogleSignInHandler {
         this.listener = listener;
     }
 
-    public Intent getSignInIntent() {
+    /**
+     * Get sign-in intent and sign out first to force account picker
+     * @param isRegistration true if this is for registration, false if for login
+     */
+    public Intent getSignInIntent(boolean isRegistration) {
+        this.isRegistrationFlow = isRegistration;
+
+        Log.d(TAG, "getSignInIntent called with isRegistration: " + isRegistration);
+
+        // Sign out from Google and Firebase to force account picker
+        firebaseAuth.signOut();
+        googleSignInClient.signOut().addOnCompleteListener(task -> {
+            Log.d(TAG, "Sign out completed, showing account picker");
+        });
+
         return googleSignInClient.getSignInIntent();
     }
 
@@ -111,7 +126,10 @@ public class GoogleSignInHandler {
         String email = firebaseUser.getEmail();
         String displayName = firebaseUser.getDisplayName();
 
+        Log.d(TAG, "===========================================");
         Log.d(TAG, "Checking user in database: " + email);
+        Log.d(TAG, "Is registration flow: " + isRegistrationFlow);
+        Log.d(TAG, "===========================================");
 
         // Split display name into first and last name
         String firstName = "";
@@ -132,15 +150,50 @@ public class GoogleSignInHandler {
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        if (snapshot.exists()) {
-                            Log.d(TAG, "User exists in database");
+                        boolean userExists = snapshot.exists();
+
+                        Log.d(TAG, "User exists in database: " + userExists);
+                        Log.d(TAG, "Registration flow: " + isRegistrationFlow);
+
+                        if (userExists && isRegistrationFlow) {
+                            // User trying to register with existing Google account
+                            Log.d(TAG, "BLOCKING: User already exists - blocking registration");
+
+                            // Sign out the user
+                            signOut();
+
+                            String errorMsg = "Google account already registered. Please login instead.";
+
+                            Toast.makeText(activity, errorMsg, Toast.LENGTH_LONG).show();
+
+                            if (listener != null) {
+                                listener.onSignInFailure(errorMsg);
+                            }
+
+                        } else if (!userExists && !isRegistrationFlow) {
+                            // User trying to login but doesn't exist
+                            Log.d(TAG, "BLOCKING: User doesn't exist - blocking login");
+
+                            // Sign out the user
+                            signOut();
+
+                            String errorMsg = "Account not found. Please register first.";
+
+                            Toast.makeText(activity, errorMsg, Toast.LENGTH_LONG).show();
+
+                            if (listener != null) {
+                                listener.onSignInFailure(errorMsg);
+                            }
+
+                        } else if (userExists && !isRegistrationFlow) {
                             // User exists - proceed to login
+                            Log.d(TAG, "SUCCESS: User exists - proceeding to login");
                             if (listener != null) {
                                 listener.onSignInSuccess(false, email, finalFirstName, finalLastName);
                             }
                         } else {
-                            Log.d(TAG, "New user - needs to complete profile");
-                            // New user - need to complete profile
+                            // New user registration - proceed
+                            Log.d(TAG, "SUCCESS: New user - needs to complete profile");
                             if (listener != null) {
                                 listener.onSignInSuccess(true, email, finalFirstName, finalLastName);
                             }

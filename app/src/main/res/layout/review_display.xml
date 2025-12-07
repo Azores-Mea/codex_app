@@ -34,10 +34,11 @@
             android:id="@+id/headerTitle"
             style="@style/TextStyle.H1"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="40dp"
             android:layout_marginStart="24dp"
             android:layout_marginEnd="16dp"
             android:text="Review"
+            android:maxLines="2"
             android:gravity="center_vertical"
             android:textColor="@color/white"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -47,75 +48,164 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <!-- Filter buttons container -->
+    <!-- Dropdown selection container -->
     <LinearLayout
-        android:id="@+id/buttonContainer"
+        android:id="@+id/dropdownContainer"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:gravity="center"
-        android:visibility="visible"
+        android:orientation="vertical"
         android:paddingVertical="16dp"
-        android:paddingHorizontal="16dp"
-        android:orientation="horizontal"
+        android:paddingHorizontal="20dp"
         android:background="@color/bgText"
         app:layout_constraintTop_toBottomOf="@id/headerLayout"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/quiz"
-            style="@style/TextStyle.Button"
-            android:layout_width="0dp"
-            android:layout_height="48dp"
-            android:layout_weight="1"
-            android:layout_marginEnd="8dp"
-            android:elevation="4dp"
-            android:text="Quiz"
-            android:textAllCaps="false"
-            android:textColor="@android:color/holo_blue_light"
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Select Assessment Type:"
             android:textSize="14sp"
-            app:backgroundTint="@color/white"
-            app:cornerRadius="15dp"
-            app:strokeColor="@android:color/holo_blue_light"
-            app:strokeWidth="1dp"
-            tools:ignore="HardcodedText" />
+            android:textColor="@color/primary"
+            android:layout_marginBottom="8dp"
+            style="@style/TextStyle.Subtitle"/>
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/coding"
-            style="@style/TextStyle.Button"
-            android:layout_width="0dp"
-            android:layout_height="48dp"
-            android:layout_weight="1"
-            android:layout_marginStart="8dp"
-            android:elevation="4dp"
-            android:text="Exercise"
-            android:textAllCaps="false"
-            android:textColor="@android:color/holo_blue_light"
-            android:textSize="14sp"
-            app:backgroundTint="@color/white"
-            app:cornerRadius="15dp"
-            app:strokeColor="@android:color/holo_blue_light"
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="4dp"
             app:strokeWidth="1dp"
-            tools:ignore="HardcodedText" />
+            app:strokeColor="@android:color/holo_blue_light"
+            app:cardBackgroundColor="@color/white">
+
+            <Spinner
+                android:id="@+id/assessmentTypeSpinner"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:paddingHorizontal="16dp"
+                android:background="@android:color/transparent"
+                android:spinnerMode="dropdown"
+                android:popupBackground="@color/white"/>
+
+        </com.google.android.material.card.MaterialCardView>
+
     </LinearLayout>
 
-    <!-- Scrollable content below buttons -->
-    <ScrollView
+    <!-- Scrollable content below dropdown -->
+
+    <LinearLayout
+        android:id="@+id/navigationSection"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingBottom="16dp"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/dropdownContainer">
+
+        <!-- Status Card -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/statusCard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="16dp"
+            app:cardCornerRadius="14dp"
+            app:cardElevation="4dp">
+
+            <TextView
+                android:id="@+id/statusText"
+                android:layout_width="match_parent"
+                android:layout_height="51dp"
+                android:gravity="center"
+                android:padding="24dp"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Navigation Buttons -->
+        <LinearLayout
+            android:id="@+id/navButtonsLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:padding="16dp"
+            android:visibility="gone">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/prevButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginEnd="8dp"
+                android:text="Previous"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/nextButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                android:text="Next"/>
+        </LinearLayout>
+
+        <!-- Expected Output Section (for Program Tracing) -->
+        <LinearLayout
+            android:id="@+id/expectedOutputSection"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="EXPECTED OUTPUT:"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:paddingBottom="8dp"/>
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="14dp"
+                app:cardElevation="4dp"
+                app:cardBackgroundColor="#E8F5E9">
+
+                <TextView
+                    android:id="@+id/expectedOutputText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="16dp"
+                    android:textSize="14sp"
+                    android:typeface="monospace"
+                    android:textColor="#2E7D32"/>
+            </com.google.android.material.card.MaterialCardView>
+        </LinearLayout>
+    </LinearLayout>
+
+    <ScrollView
+        android:id="@+id/scrollView2"
+        android:layout_width="412dp"
+        android:layout_height="676dp"
         android:fillViewport="true"
-        app:layout_constraintTop_toBottomOf="@id/buttonContainer"
         app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintTop_toBottomOf="@+id/navigationSection">
+
 
         <LinearLayout
             android:id="@+id/review_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:paddingBottom="16dp">
 
             <!-- Content will be dynamically added here -->
+
 
         </LinearLayout>
     </ScrollView>

@@ -45,25 +45,24 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintHorizontal_bias="0.056"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/date"
                 app:layout_constraintVertical_bias="0.0"
                 app:srcCompat="@drawable/beginner_classifier" />
+
 
             <TextView
                 android:id="@+id/date"
                 style="@style/TextStyle.Helper"
                 android:layout_width="78dp"
                 android:layout_height="13dp"
-                android:layout_marginTop="24dp"
-                android:text="MM/DD/YYYY"
-                android:textColor="#A07C49"
+                android:layout_marginTop="20dp"
                 android:clickable="false"
                 android:focusable="false"
+                android:text="Assessment"
+                android:textColor="#A07C49"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintHorizontal_bias="0.092"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/l_title" />
-
 
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/percentStroke"
@@ -125,6 +124,35 @@
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/assessment"
+                android:layout_width="64dp"
+                android:layout_height="37dp"
+                android:layout_gravity="center"
+                android:layout_marginTop="4dp"
+                android:layout_marginEnd="4dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
+                app:cardBackgroundColor="@android:color/white"
+                app:cardCornerRadius="10dp"
+                app:cardUseCompatPadding="true"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:strokeColor="#A07C49"
+                app:strokeWidth="1dp">
+
+                <TextView
+                    android:id="@+id/assessment_percent"
+                    style="@style/TextStyle.Small"
+                    android:layout_width="53dp"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:gravity="center"
+                    android:text="100%"
+                    android:textColor="#A07C49"/>
+            </com.google.android.material.card.MaterialCardView>
 
         </androidx.constraintlayout.widget.ConstraintLayout>
     </com.google.android.material.card.MaterialCardView>

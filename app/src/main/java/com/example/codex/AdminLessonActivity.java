@@ -275,7 +275,55 @@ public class AdminLessonActivity extends AppCompatActivity {
 
     private void saveToDatabase(DatabaseReference sectionRef, Map<String, Object> dataMap) {
         sectionRef.setValue(dataMap)
-                .addOnSuccessListener(aVoid -> Toast.makeText(this, "✅ Upload successful!", Toast.LENGTH_SHORT).show())
+                .addOnSuccessListener(aVoid -> {
+                    Toast.makeText(this, "✅ Upload successful!", Toast.LENGTH_SHORT).show();
+                    clearSectionInputs();
+                })
                 .addOnFailureListener(e -> Toast.makeText(this, "❌ Database error: " + e.getMessage(), Toast.LENGTH_LONG).show());
+    }
+
+    private void clearSectionInputs() {
+        String sectionType = sectionSpinner.getSelectedItem().toString();
+
+        switch (sectionType) {
+            case "TITLE":
+                titleInput.setText("");
+                descriptionInput.setText("");
+                helper1.setText("");
+                helper2.setText("");
+                helper3.setText("");
+                helper1Drawable.setText("");
+                helper2Drawable.setText("");
+                helper3Drawable.setText("");
+                helper1Code.setText("");
+                helper2Code.setText("");
+                helper3Code.setText("");
+                break;
+
+            case "EXAMPLE/TYPES":
+                exampleTitleInput.setText("");
+                exampleDescInput.setText("");
+                helper4.setText("");
+                helper5.setText("");
+                helper4Drawable.setText("");
+                helper5Drawable.setText("");
+                helper4Code.setText("");
+                helper5Code.setText("");
+                break;
+
+            case "SUBTITLE/OUTPUT":
+                subtitleInput.setText("");
+                helper6.setText("");
+                helper7.setText("");
+                helper6Drawable.setText("");
+                helper7Drawable.setText("");
+                helper6Code.setText("");
+                helper7Code.setText("");
+                break;
+
+            case "TOOLTIP":
+                tooltipInput.setText("");
+                break;
+        }
     }
 }

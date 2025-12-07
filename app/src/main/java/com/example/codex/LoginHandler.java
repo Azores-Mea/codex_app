@@ -6,8 +6,6 @@ import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
-import android.graphics.LinearGradient;
-import android.graphics.Shader;
 import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -17,6 +15,7 @@ import android.widget.*;
 import android.os.Handler;
 
 import androidx.annotation.NonNull;
+import androidx.constraintlayout.widget.ConstraintLayout;
 
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputLayout;
@@ -29,10 +28,12 @@ public class LoginHandler {
     private final Activity activity;
     private final DatabaseReference databaseReference;
 
-    private final LinearLayout loginLayout;
+    private final ConstraintLayout loginLayout;
     private final EditText loginEmail, loginPassword;
     private final ImageView closeLogin;
     private final MaterialButton loginBtn;
+
+    private final MaterialButton gmailAccountLogin;
     private final Button loginCancel;
     private final TextView checkEmail, checkPass;
     private final TextInputLayout emailLayout, passLayout;
@@ -62,12 +63,13 @@ public class LoginHandler {
         checkPass = activity.findViewById(R.id.checkPass_log);
         emailLayout = activity.findViewById(R.id.login_email);
         passLayout = activity.findViewById(R.id.login_pass);
+        gmailAccountLogin = activity.findViewById(R.id.gmailAccountLogin);
 
         // Hide password initially
         loginPassword.setTransformationMethod(new android.text.method.PasswordTransformationMethod());
         passLayout.setEndIconActivated(false);
 
-        loginLayout.setVisibility(LinearLayout.GONE);
+        loginLayout.setVisibility(ConstraintLayout.GONE);
 
         // Disable button initially
         loginBtn.setEnabled(false);
@@ -78,8 +80,6 @@ public class LoginHandler {
         setupListeners();
         TextView title = activity.findViewById(R.id.login_title);
         GradientTextUtil.applyGradient(title, "#03162A", "#0A4B90");
-
-
     }
 
     private void setupListeners() {
@@ -283,7 +283,6 @@ public class LoginHandler {
 
         MaterialButton btnYes = dialogView.findViewById(R.id.yes_btn);
 
-
         AlertDialog.Builder builder = new AlertDialog.Builder(activity);
         builder.setView(dialogView);
         AlertDialog dialog = builder.create();
@@ -311,7 +310,48 @@ public class LoginHandler {
             activity.startActivity(intent);
             activity.overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
             activity.finish();
+        });
+    }
 
+    public void hideLoginForm() {
+        if (!isVisible) return;
+        isVisible = false;
+
+        // Disable interaction immediately
+        loginLayout.setClickable(false);
+        loginLayout.setFocusable(false);
+        loginLayout.setFocusableInTouchMode(false);
+        gmailAccountLogin.setEnabled(false);
+        loginEmail.setEnabled(false);
+        loginPassword.setEnabled(false);
+
+        Animation slideDown = AnimationUtils.loadAnimation(activity, R.anim.formslidedown);
+        loginLayout.startAnimation(slideDown);
+
+        slideDown.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+                // Animation started - form already disabled above
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {}
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                loginLayout.setVisibility(LinearLayout.GONE);
+                resetForm();
+
+                // Immediately make wcform available - no delay
+                View wcform = activity.findViewById(R.id.wcform);
+                if (wcform != null) {
+                    wcform.setClickable(true);
+                    wcform.setFocusable(true);
+                    wcform.setEnabled(true);
+                    wcform.bringToFront();
+                    wcform.requestLayout(); // Force layout update
+                }
+            }
         });
     }
 
@@ -319,41 +359,37 @@ public class LoginHandler {
         if (isVisible) return;
         isVisible = true;
 
+        // Reset and enable fields
+        loginEmail.setEnabled(true);
+        loginPassword.setEnabled(true);
+        gmailAccountLogin.setEnabled(true);
+
+        // Make wcform non-interactive immediately
+        View wcform = activity.findViewById(R.id.wcform);
+        if (wcform != null) {
+            wcform.setClickable(false);
+            wcform.setEnabled(false);
+        }
+
+        // Setup login form
+        loginLayout.setVisibility(LinearLayout.VISIBLE);
         loginLayout.setClickable(true);
         loginLayout.setFocusable(true);
         loginLayout.setFocusableInTouchMode(true);
-        loginLayout.setVisibility(LinearLayout.VISIBLE);
         loginLayout.bringToFront();
-        loginLayout.startAnimation(AnimationUtils.loadAnimation(activity, R.anim.formslideup));
+        loginLayout.requestLayout(); // Force layout update
+
+        Animation slideUp = AnimationUtils.loadAnimation(activity, R.anim.formslideup);
+        loginLayout.startAnimation(slideUp);
 
         resetForm();
-    }
-
-    public void hideLoginForm() {
-        if (!isVisible) return;
-        isVisible = false;
-
-        loginLayout.setClickable(false);
-        loginLayout.setFocusableInTouchMode(false);
-
-        Animation slideDown = AnimationUtils.loadAnimation(activity, R.anim.formslidedown);
-        loginLayout.startAnimation(slideDown);
-
-        slideDown.setAnimationListener(new Animation.AnimationListener() {
-            @Override public void onAnimationStart(Animation animation) {}
-            @Override public void onAnimationRepeat(Animation animation) {}
-
-            @Override
-            public void onAnimationEnd(Animation animation) {
-                loginLayout.setVisibility(LinearLayout.GONE);
-                resetForm();
-            }
-        });
     }
 
     private void resetForm() {
         loginEmail.setText("");
         loginPassword.setText("");
+        loginEmail.clearFocus();
+        loginPassword.clearFocus();
         checkEmail.setText("");
         checkPass.setText("");
         emailLayout.setBoxStrokeColor(COLOR_DEFAULT);

@@ -10,6 +10,7 @@ import android.view.animation.AnimationUtils;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
@@ -22,11 +23,14 @@ public class CompleteProfileHandler {
 
     private static final String TAG = "CompleteProfileHandler";
 
+    private RegistrationHandler registrationHandler;
+
     private final Activity activity;
     private final LinearLayout completeInfoLayout;
     private final AutoCompleteTextView educationalBackgroundInput;
     private final EditText fieldOfStudyInput;
     private final MaterialButton confirmBtn;
+    private final ImageButton closeBtn;
     private final TextInputLayout educationalBackgroundLayout;
 
     private boolean isVisible = false;
@@ -48,6 +52,7 @@ public class CompleteProfileHandler {
         educationalBackgroundInput = activity.findViewById(R.id.educationalBackgroundInputComplete);
         fieldOfStudyInput = activity.findViewById(R.id.fieldOfStudyInputComplete);
         confirmBtn = activity.findViewById(R.id.confirmBtnComplete);
+        closeBtn = activity.findViewById(R.id.close_complete);
         educationalBackgroundLayout = activity.findViewById(R.id.educationalBackgroundLayoutComplete);
 
         completeInfoLayout.setVisibility(LinearLayout.GONE);
@@ -56,6 +61,10 @@ public class CompleteProfileHandler {
         setupListeners();
 
         Log.d(TAG, "CompleteProfileHandler initialized");
+    }
+
+    public void setRegistrationHandler(RegistrationHandler handler) {
+        this.registrationHandler = handler;
     }
 
     public void setOnProfileCompleteListener(OnProfileCompleteListener listener) {
@@ -98,6 +107,12 @@ public class CompleteProfileHandler {
             Log.d(TAG, "Field of study text changed: " + fieldOfStudyInput.getText().toString());
             validateForm();
         }));
+
+        // Add close button listener
+        closeBtn.setOnClickListener(v -> {
+            Log.d(TAG, "Close button clicked");
+            hideCompleteInfoForm();
+        });
 
         confirmBtn.setOnClickListener(v -> {
             Log.d(TAG, "Confirm button clicked");
@@ -144,10 +159,60 @@ public class CompleteProfileHandler {
         return isValid;
     }
 
+    public void hideCompleteInfoForm() {
+        if (!isVisible) {
+            Log.d(TAG, "Form already hidden");
+            return;
+        }
+
+        Log.d(TAG, "Hiding complete info form");
+
+        // Disable interaction immediately
+        completeInfoLayout.setClickable(false);
+        completeInfoLayout.setEnabled(false);
+        educationalBackgroundInput.setEnabled(false);
+        fieldOfStudyInput.setEnabled(false);
+
+        Animation slideDown = AnimationUtils.loadAnimation(activity, R.anim.formslidedown);
+        completeInfoLayout.startAnimation(slideDown);
+
+        slideDown.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+                // Animation started - form already disabled above
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {}
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                completeInfoLayout.setVisibility(LinearLayout.GONE);
+                isVisible = false;
+                resetForm();
+
+                // Immediately make wcform available - no delay
+                View wcform = activity.findViewById(R.id.wcform);
+                if (wcform != null) {
+                    wcform.setClickable(true);
+                    wcform.setEnabled(true);
+                    wcform.setFocusable(true);
+                    wcform.bringToFront();
+                    wcform.requestLayout(); // Force layout update
+                }
+            }
+        });
+    }
+
     public void showCompleteInfoForm(String email, String firstName, String lastName) {
         if (isVisible) {
             Log.d(TAG, "Form already visible");
             return;
+        }
+
+        // Tell registration handler not to bring wcform to front
+        if (registrationHandler != null) {
+            registrationHandler.setShouldBringWCFormToFront(false);
         }
 
         Log.d(TAG, "Showing complete info form for: " + email);
@@ -157,45 +222,28 @@ public class CompleteProfileHandler {
         this.userFirstName = firstName;
         this.userLastName = lastName;
 
-        completeInfoLayout.setClickable(true);
-        completeInfoLayout.setFocusable(true);
-        completeInfoLayout.setFocusableInTouchMode(true);
+        // Enable fields
+        educationalBackgroundInput.setEnabled(true);
+        fieldOfStudyInput.setEnabled(true);
+
+        // Make wcform non-interactive immediately
+        View wcform = activity.findViewById(R.id.wcform);
+        if (wcform != null) {
+            wcform.setClickable(false);
+            wcform.setEnabled(false);
+        }
+
+        // Setup complete info form
         completeInfoLayout.setVisibility(LinearLayout.VISIBLE);
+        completeInfoLayout.setClickable(true);
+        completeInfoLayout.setEnabled(true);
         completeInfoLayout.bringToFront();
+        completeInfoLayout.requestLayout(); // Force layout update
 
         Animation slideUp = AnimationUtils.loadAnimation(activity, R.anim.formslideup);
         completeInfoLayout.startAnimation(slideUp);
 
         resetForm();
-    }
-
-    public void hideCompleteInfoForm() {
-        if (!isVisible) {
-            Log.d(TAG, "Form already hidden");
-            return;
-        }
-
-        Log.d(TAG, "Hiding complete info form");
-
-        Animation slideDown = AnimationUtils.loadAnimation(activity, R.anim.formslidedown);
-        completeInfoLayout.startAnimation(slideDown);
-
-        slideDown.setAnimationListener(new Animation.AnimationListener() {
-            @Override
-            public void onAnimationStart(Animation animation) {}
-
-            @Override
-            public void onAnimationEnd(Animation animation) {
-                completeInfoLayout.setVisibility(LinearLayout.GONE);
-                completeInfoLayout.setClickable(false);
-                completeInfoLayout.setFocusable(false);
-                isVisible = false;
-                resetForm();
-            }
-
-            @Override
-            public void onAnimationRepeat(Animation animation) {}
-        });
     }
 
     private void resetForm() {
